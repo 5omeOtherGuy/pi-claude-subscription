@@ -7,7 +7,7 @@ This repo is a Pi package shipping a single extension that registers a native Cl
 - `REPO_MAP.md` / `INDEX.md` — codebase map.
 - `CONTRIBUTING.md` — contribution and testing rules.
 - `docs/current-status.md` — implementation notes and known follow-ups.
-- `/home/someotherguy/pi/plans/project/minimalcc-pi-hardening-roadmap-2026-06-06.md` — source of truth for future hardening work. Read it before implementing hardening items, and update it when roadmap work is completed, deferred, replaced, or made obsolete.
+- Open GitHub issues — work state and planned work; issues labelled `enhancement` are hardening work (for example the SSE self-heal set #66–#70). Comment on or close an issue when its work is completed, deferred, or replaced.
 
 ## Commands
 

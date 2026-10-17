@@ -8,34 +8,48 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # PR runs share a group per ref so a new push cancels the superseded run;
+  # every other run gets its own group so nothing on main is cancelled or dropped.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
-  test:
-    name: Typecheck and test (Node ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
+  gate:
+    name: gate
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: [22.x]
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Set up Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: ${{ matrix.node-version }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Check
+      - name: Gate
         run: npm run check
+
+  # Temporary: the main ruleset still requires this check name. It passes only
+  # when `gate` succeeded (a skipped required job would count as passing).
+  # Remove it once the ruleset requires `gate` instead.
+  legacy-required-check:
+    name: Typecheck and test (Node 22.x)
+    needs: gate
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require gate success
+        env:
+          GATE_RESULT: ${{ needs.gate.result }}
+        run: test "$GATE_RESULT" = success

@@ -14,7 +14,7 @@ This repo is a Pi package shipping a single extension that registers a native Cl
 - Install: `npm ci`
 - Test: `npm test`
 - Typecheck: `npm run typecheck`
-- Pre-PR gate: `npm run check`
+- Gate: `npm run check` (secret scan, tests incl. pack check, typecheck); CI job `gate` runs exactly this.
 
 ## Workflow
 

@@ -24,5 +24,6 @@ Deterministic Node tests use fake credentials, fake tokens, and mocked network/t
 - `package-manifest.test.ts` — manifest metadata, Pi extension discovery, credential-pattern absence, `npm pack --dry-run` contents, and the versioned-changelog requirement.
 - `pi-session.test.ts` — loads the extension into a real Pi session from the installed devDependency with the Anthropic endpoint stubbed: provider selection, OAuth-only headers, system blocks, tool declarations, and a tool-call round trip.
 - `redaction.test.ts` — redaction helpers for header/token patterns, exact known-secret replacement, and bare-token limitations.
+- `secret-scan.test.ts` — `scripts/secret-scan.mjs` flags a tracked credential-shaped string by file and line, and passes a clean tree silently.
 - `system-shape.test.ts` — pure prompt sanitizing and `system` block shaping helpers.
 - `tool-json-arguments.test.ts` — partial/final `tool_use` JSON parsing and repair, including fail-closed final behavior and pass-through of model-emitted extra keys.

@@ -140,7 +140,8 @@ Module-by-module responsibilities are in [`src/INDEX.md`](src/INDEX.md); the tes
 
 - `npm test` — deterministic Node tests with fake credentials, fixtures, and mocked network boundaries.
 - `npm run typecheck` — TypeScript compile check.
-- `npm run check` — tests plus typecheck.
+- `npm run check` — the gate (CI job `gate`): secret scan, tests, typecheck.
+- `npm run secret-scan` — credential-shaped strings in tracked files (`scripts/secret-scan.mjs`).
 
 None of these is a live Anthropic request test.
 

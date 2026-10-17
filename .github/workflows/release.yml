@@ -1,0 +1,43 @@
+name: Release
+
+# release-please keeps a release PR open from the Conventional Commits on main.
+# Merging that PR bumps package.json, updates CHANGELOG.md, tags vX.Y.Z and
+# creates the GitHub Release. It runs with a GitHub App token, because a PR
+# opened with the default GITHUB_TOKEN would get no gate run. The job stays off
+# until the owner sets the RELEASE_APP_CLIENT_ID variable and the
+# RELEASE_APP_PRIVATE_KEY secret. Nothing is published to a registry.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    if: vars.RELEASE_APP_CLIENT_ID != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+
+      - name: Run release-please
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

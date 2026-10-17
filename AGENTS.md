@@ -26,5 +26,5 @@ This repo is a Pi package shipping a single extension that registers a native Cl
    - Cleanup, from outside the worktree: `git worktree remove ../minimalcc-pi-<slug> && git branch -D <branch> && git fetch origin --prune && git worktree prune`.
 2. For behavior changes, add/update deterministic tests first; no live Anthropic/API calls.
 3. Run `npm run check` before PRs.
-4. For user-visible changes, update `CHANGELOG.md` under `Unreleased` using Keep a Changelog/SemVer, or state `Changelog: not needed` for tiny/internal PRs.
-5. For approved releases, align `package.json`, changelog, Git tag `vX.Y.Z`, and GitHub Release.
+4. Write the PR title in user-facing Conventional Commits form; release-please builds `CHANGELOG.md` from it.
+5. Releases go through the release-please PR; merging it bumps `package.json`, tags `vX.Y.Z` and creates the GitHub Release. Never tag or publish by hand. The first release PR takes over the hand-kept `[Unreleased]` entries (move them into its section and its release notes) and drops its `v0.1.0...` compare link, since no `v0.1.0` tag exists.

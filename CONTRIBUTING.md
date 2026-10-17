@@ -36,7 +36,7 @@ npm run check
 1. Create a topic branch off `main`.
 2. Make the change and update deterministic tests when behavior changes.
 3. Run `npm run check`.
-4. Open a pull request against `main` and address CI failures.
+4. Open a pull request against `main` and address CI failures. Write the PR title in Conventional Commits form (`fix: …`, `feat: …`, `docs: …`), in words users understand: PRs are squash-merged with that title, and release-please builds `CHANGELOG.md` and the next version from it.
 
 ## What to test
 

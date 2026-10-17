@@ -100,7 +100,8 @@ test("current package version has a versioned changelog section", () => {
   assert.match(pkg.version ?? "", /^\d+\.\d+\.\d+$/, "package version must be a release semver");
 
   const changelog = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");
-  const versionHeader = new RegExp(`^## \\[${pkg.version}\\](?:\\s+-\\s+.*)?$`, "m");
+  // Hand-kept "## [x.y.z] - date" or release-please "## [x.y.z](compare-url) (date)".
+  const versionHeader = new RegExp(`^## \\[?${(pkg.version ?? "").replaceAll(".", "\\.")}\\]?(?=$|[\\s(])`, "m");
   assert.match(
     changelog,
     versionHeader,

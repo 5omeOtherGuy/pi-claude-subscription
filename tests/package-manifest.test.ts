@@ -27,12 +27,12 @@ test("packageManifestExposesPiExtensionWithoutCredentialMaterial", () => {
   assert.match(pkg.description ?? "", /Pi package/);
   assert.equal(pkg.license, "MIT");
   assert.equal(pkg.type, "module");
-  assert.equal(pkg.homepage, "https://github.com/5omeOtherGuy/minimalcc-pi#readme");
+  assert.equal(pkg.homepage, "https://github.com/5omeOtherGuy/pi-claude-subscription#readme");
   assert.deepEqual(pkg.repository, {
     type: "git",
-    url: "git+https://github.com/5omeOtherGuy/minimalcc-pi.git",
+    url: "git+https://github.com/5omeOtherGuy/pi-claude-subscription.git",
   });
-  assert.deepEqual(pkg.bugs, { url: "https://github.com/5omeOtherGuy/minimalcc-pi/issues" });
+  assert.deepEqual(pkg.bugs, { url: "https://github.com/5omeOtherGuy/pi-claude-subscription/issues" });
   assert.deepEqual(pkg.peerDependencies, {
     "@earendil-works/pi-ai": ">=0.80.6 <2",
     "@earendil-works/pi-coding-agent": ">=0.80.6 <2",

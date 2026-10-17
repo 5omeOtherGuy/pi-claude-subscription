@@ -1,10 +1,11 @@
 import type { RefreshModelsContext } from "@earendil-works/pi-ai";
-import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 
 import { loadActiveClaudeCodeCredentials } from "./credential-accounts.ts";
 import { buildNativeHeaders } from "./native-headers.ts";
 import {
+  type AnthropicCompat,
   CLAUDE_SUBSCRIPTION_NATIVE_API_ID,
+  type ClaudeModelConfig,
   MODELS,
 } from "./models.ts";
 import { isRecord } from "./type-guards.ts";
@@ -23,7 +24,7 @@ function supported(value: unknown): boolean {
   return isRecord(value) && value.supported === true;
 }
 
-function mapModel(raw: unknown): ProviderModelConfig | undefined {
+function mapModel(raw: unknown): ClaudeModelConfig | undefined {
   if (!isRecord(raw) || typeof raw.id !== "string" || !raw.id.startsWith("claude-") ||
     typeof raw.display_name !== "string" || !raw.display_name.trim() || raw.lifecycle === "retired") return;
   const known = MODELS.find((model) => model.id === raw.id);
@@ -72,12 +73,12 @@ export function createClaudeModelCatalog(
   fetchImpl: FetchLike = globalThis.fetch.bind(globalThis),
   loadToken: LoadToken = loadActiveClaudeCodeCredentials,
 ) {
-  return async (context: RefreshModelsContext): Promise<ProviderModelConfig[]> => {
+  return async (context: RefreshModelsContext): Promise<ClaudeModelConfig[]> => {
     if (!context.allowNetwork || context.signal.aborted) return [...MODELS];
     try {
       const token = await loadToken();
       const signal = AbortSignal.any([context.signal, AbortSignal.timeout(TIMEOUT_MS)]);
-      const models: ProviderModelConfig[] = [];
+      const models: ClaudeModelConfig[] = [];
       const ids = new Set<string>();
       let cursor: string | undefined;
       for (let page = 0; page < MAX_PAGES; page++) {
@@ -96,8 +97,8 @@ export function createClaudeModelCatalog(
           // Preserve local selection aliases when their wire model is advertised.
           for (const local of MODELS) {
             if (ids.has(local.id)) continue;
-            const nativeId = isRecord(local.compat) ? local.compat.nativeModelId : undefined;
-            if (typeof nativeId === "string" && ids.has(nativeId)) models.push(local);
+            const nativeId = (local.compat as AnthropicCompat | undefined)?.nativeModelId;
+            if (nativeId && ids.has(nativeId)) models.push(local);
           }
           return models.length ? models : [...MODELS];
         }

@@ -9,11 +9,17 @@ No live Anthropic calls: the deterministic suite must stay free of live Anthropi
 | Tool JSON parsing / SSE | `node --test --import tsx tests/tool-json-arguments.test.ts tests/anthropic-sse.test.ts tests/native-stream-simple.test.ts` | `npm run check` |
 | Request headers/body/cache | `node --test --import tsx tests/native-request.test.ts tests/native-stream-simple.test.ts` | `npm run check` |
 | Credentials/refresh/redaction | `node --test --import tsx tests/native-credentials.test.ts tests/redaction.test.ts tests/native-stream-simple.test.ts` | `npm run check` |
-| Extension registration/provider guard | `node --test --import tsx tests/current-provider-system-shape.test.ts tests/package-manifest.test.ts` | `npm run check` |
-| Dependency/model metadata | `node --test --import tsx tests/dependency-drift.test.ts tests/current-provider-system-shape.test.ts tests/native-request.test.ts` plus `npm run typecheck` | `npm run check` |
+| Extension registration/provider guard | `node --test --import tsx tests/current-provider-system-shape.test.ts tests/package-manifest.test.ts tests/pi-session.test.ts` | `npm run check` |
+| Dependency/model metadata | `node --test --import tsx tests/dependency-drift.test.ts tests/current-provider-system-shape.test.ts tests/native-request.test.ts tests/pi-session.test.ts` plus `npm run typecheck` | `npm run check` |
 | Docs only | Link/path and wording checks for the touched docs | `npm run typecheck` optional if code is untouched |
 
 `npm run check` is the pre-PR gate for behavior, dependency, model, request, credential, stream, and package changes.
+
+## Host compatibility
+
+- Supported Pi range: `>=0.80.6 <2` (the `peerDependencies` in `package.json`). 0.80.6 is the floor for native `max` thinking; Pi 2.x is untested and outside the range until verified.
+- CI tests the locked devDependency, which is the newest Pi release (1.3.0 as of 2026-10-18), with `tests/pi-session.test.ts`: it loads the extension into a real Pi session against a stubbed Anthropic endpoint and checks provider selection, OAuth-only headers, system blocks, tool declarations, and a tool-call round trip. On 2026-10-18 the same scenario also passed against Pi 0.80.6 and 0.87.1 in scratch installs (`npm install --no-save @earendil-works/pi-ai@<v> @earendil-works/pi-coding-agent@<v>`); older Pi such as 0.80.6 exposes `session.modelRegistry.find()` instead of `session.modelRuntime.getModel()`.
+- When a new Pi major ships, bump both Pi packages together (Dependabot's `pi` group does this), adapt `src/` and `tests/`, repeat the check above, and widen the range only for what was verified.
 
 ## Supply-chain drift policy
 

@@ -22,6 +22,7 @@ Deterministic Node tests use fake credentials, fake tokens, and mocked network/t
 - `native-thinking-levels.test.ts` — every model's supported levels/clamping, adaptive effort mapping through `max`, manual budgets through `xhigh`, and thinking omission when reasoning is off.
 - `native-tool-sequencing.test.ts` — shared tool-sequencing predicates and the sent-tool-result eligibility set (complete sequences, orphans, non-replayable turns, duplicates).
 - `package-manifest.test.ts` — manifest metadata, Pi extension discovery, credential-pattern absence, `npm pack --dry-run` contents, and the versioned-changelog requirement.
+- `pi-session.test.ts` — loads the extension into a real Pi session from the installed devDependency with the Anthropic endpoint stubbed: provider selection, OAuth-only headers, system blocks, tool declarations, and a tool-call round trip.
 - `redaction.test.ts` — redaction helpers for header/token patterns, exact known-secret replacement, and bare-token limitations.
 - `system-shape.test.ts` — pure prompt sanitizing and `system` block shaping helpers.
 - `tool-json-arguments.test.ts` — partial/final `tool_use` JSON parsing and repair, including fail-closed final behavior and pass-through of model-emitted extra keys.

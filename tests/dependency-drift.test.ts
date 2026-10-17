@@ -48,12 +48,12 @@ test("pi dev dependency lockstep protects native provider type and schema drift 
   const rootLock = packages[""];
   const piAi = packages["node_modules/@earendil-works/pi-ai"];
   const piCodingAgent = packages["node_modules/@earendil-works/pi-coding-agent"];
+  // Pi >= 1.0 pins pi-ai exactly, so npm dedupes it; older Pi nested its own copy.
   const nestedPiAi = packages["node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai"];
 
   assert.ok(rootLock, "package-lock must include the root package entry");
   assert.ok(piAi, "package-lock must include direct @earendil-works/pi-ai");
   assert.ok(piCodingAgent, "package-lock must include direct @earendil-works/pi-coding-agent");
-  assert.ok(nestedPiAi, "package-lock must show the pi-ai copy used by pi-coding-agent");
 
   const rootPiAiRange = pkg.devDependencies?.["@earendil-works/pi-ai"];
   const rootPiCodingAgentRange = pkg.devDependencies?.["@earendil-works/pi-coding-agent"];
@@ -64,8 +64,11 @@ test("pi dev dependency lockstep protects native provider type and schema drift 
   const expectedPiVersion = unlockedVersion(rootPiAiRange);
   assert.equal(piAi.version, expectedPiVersion);
   assert.equal(piCodingAgent.version, expectedPiVersion);
-  assert.equal(piCodingAgent.dependencies?.["@earendil-works/pi-ai"], rootPiAiRange);
-  assert.equal(nestedPiAi.version, expectedPiVersion, "nested pi-ai must not drift from direct pi-ai");
+  assert.ok(
+    [expectedPiVersion, rootPiAiRange].includes(piCodingAgent.dependencies?.["@earendil-works/pi-ai"]),
+    "pi-coding-agent must depend on the same pi-ai version as the direct dependency",
+  );
+  assert.equal((nestedPiAi ?? piAi).version, expectedPiVersion, "pi-ai used by pi-coding-agent must not drift from direct pi-ai");
 });
 
 test("node runtime floor and typings stay aligned with Pi runtime", () => {

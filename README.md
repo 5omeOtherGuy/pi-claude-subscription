@@ -13,7 +13,7 @@ No bundled credentials, no Anthropic API keys, no local proxy: at request time t
 
 ## Requirements
 
-- Pi ≥ 0.80.6 (required for native `max` thinking).
+- Pi 0.80.6 or newer, below 2.0 (0.80.6 is required for native `max` thinking). CI tests Pi 1.3.0; Pi 0.80.6, 0.87.1, and 1.3.0 were verified on 2026-10-18.
 - Node.js ≥ 22.19.0.
 - Claude Code installed and logged in on the same machine.
 - A credential source: `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.credentials.json` (`.claudeAiOauth.accessToken`), a minimalcc-owned import from `/claude-subscription-import`, or on macOS a `Claude Code-credentials*` Keychain item.

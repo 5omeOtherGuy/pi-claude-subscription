@@ -1,0 +1,16 @@
+#!/bin/sh
+# Refuses direct pushes to main (changes land through a squash-merged PR) and
+# runs the gate before any other push. Enable once per checkout with:
+#   git config core.hooksPath .githooks
+# Only the owner may bypass it (git push --no-verify), for emergencies.
+set -eu
+
+zero=0000000000000000000000000000000000000000
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ] && [ "$local_sha" != "$zero" ]; then
+    echo "pre-push: direct pushes to main are not allowed; open a pull request instead." >&2
+    exit 1
+  fi
+done
+
+npm run -s check

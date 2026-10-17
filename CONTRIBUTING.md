@@ -15,7 +15,10 @@ Requirements: Node.js 22.19 or newer (`.nvmrc` pins the CI default and matches P
 git clone https://github.com/5omeOtherGuy/minimalcc-pi.git
 cd minimalcc-pi
 npm ci
+git config core.hooksPath .githooks
 ```
+
+The `.githooks/pre-push` hook runs the gate before every push and refuses direct pushes to `main`; changes land through pull requests.
 
 Useful checks:
 

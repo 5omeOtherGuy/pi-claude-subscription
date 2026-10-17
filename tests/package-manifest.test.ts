@@ -40,7 +40,8 @@ test("packageManifestExposesPiExtensionWithoutCredentialMaterial", () => {
   assert.deepEqual(pkg.scripts, {
     test: "node --test --import tsx \"tests/**/*.test.ts\"",
     typecheck: "tsc --noEmit",
-    check: "npm test && npm run typecheck",
+    "secret-scan": "node scripts/secret-scan.mjs",
+    check: "npm run -s secret-scan && node --test --test-reporter=dot --import tsx \"tests/**/*.test.ts\" && npm run -s typecheck",
   });
   assert.deepEqual(pkg.files, ["extensions/", "src/", "docs/", "CHANGELOG.md", "README.md", "LICENSE"]);
 

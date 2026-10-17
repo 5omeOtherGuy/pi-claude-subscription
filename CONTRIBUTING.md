@@ -25,7 +25,7 @@ npm run typecheck
 npm run check
 ```
 
-`npm run check` is the safe public gate: deterministic tests plus TypeScript type-checking. Focused gates by change type and the supply-chain/runtime drift policy are in [`docs/verification-gates.md`](docs/verification-gates.md).
+`npm run check` is the gate: secret scan of tracked files, deterministic tests (including the `npm pack --dry-run` contents check), and TypeScript type-checking. CI runs exactly this command in the job `gate`. Focused gates by change type and the supply-chain/runtime drift policy are in [`docs/verification-gates.md`](docs/verification-gates.md).
 
 ## Workflow
 

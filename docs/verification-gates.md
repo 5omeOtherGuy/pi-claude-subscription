@@ -13,7 +13,7 @@ No live Anthropic calls: the deterministic suite must stay free of live Anthropi
 | Dependency/model metadata | `node --test --import tsx tests/dependency-drift.test.ts tests/current-provider-system-shape.test.ts tests/native-request.test.ts tests/pi-session.test.ts` plus `npm run typecheck` | `npm run check` |
 | Docs only | Link/path and wording checks for the touched docs | `npm run typecheck` optional if code is untouched |
 
-`npm run check` is the pre-PR gate for behavior, dependency, model, request, credential, stream, and package changes.
+`npm run check` (CI job `gate`: secret scan, tests, typecheck) is the pre-PR gate for behavior, dependency, model, request, credential, stream, and package changes.
 
 ## Host compatibility
 

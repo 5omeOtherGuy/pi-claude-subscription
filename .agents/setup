@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Orb setup: idempotent; installs locked dependencies, enables the repository
+# hooks, and reports which credentials are present without printing them.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+floor="$(cat .nvmrc)"
+node -e '
+  const [want, have] = [process.argv[1], process.versions.node].map((v) => v.split(".").map(Number));
+  const ok = have[0] > want[0] || (have[0] === want[0] && (have[1] > want[1] || (have[1] === want[1] && have[2] >= want[2])));
+  if (!ok) { console.error(`setup: Node ${process.versions.node} is below the floor ${process.argv[1]}`); process.exit(1); }
+' "$floor"
+
+echo "setup: npm ci"
+time npm ci --no-audit --no-fund
+
+git config core.hooksPath .githooks
+echo "setup: git hooks enabled from .githooks"
+
+present() { if [ -n "${!1:-}" ]; then echo "present"; else echo "absent"; fi; }
+echo "setup: GH_TOKEN $(present GH_TOKEN), GITHUB_TOKEN $(present GITHUB_TOKEN)"
+claude_file="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.credentials.json"
+if [ -f "$claude_file" ]; then echo "setup: Claude Code credentials file present (live tests stay opt-in)"; else echo "setup: Claude Code credentials file absent (not needed; the gate is hermetic)"; fi

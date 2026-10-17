@@ -1,7 +1,7 @@
 # Claude Subscription Provider for Pi
 
-[![CI](https://github.com/5omeOtherGuy/minimalcc-pi/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/5omeOtherGuy/minimalcc-pi/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/5omeOtherGuy/minimalcc-pi/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/5omeOtherGuy/minimalcc-pi/actions/workflows/codeql.yml)
+[![CI](https://github.com/5omeOtherGuy/pi-claude-subscription/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/5omeOtherGuy/pi-claude-subscription/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/5omeOtherGuy/pi-claude-subscription/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/5omeOtherGuy/pi-claude-subscription/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js >=22.19](https://img.shields.io/badge/node-%3E%3D22.19-brightgreen)](.nvmrc)
 
@@ -23,13 +23,13 @@ If the credential cannot be read, requests fail with a login hint. The provider 
 ## Install
 
 ```bash
-pi install git:github.com/5omeOtherGuy/minimalcc-pi
+pi install git:github.com/5omeOtherGuy/pi-claude-subscription
 ```
 
 Pin a tag or commit for reproducible installs:
 
 ```bash
-pi install git:github.com/5omeOtherGuy/minimalcc-pi@<tag-or-commit>
+pi install git:github.com/5omeOtherGuy/pi-claude-subscription@<tag-or-commit>
 ```
 
 ## Select a model

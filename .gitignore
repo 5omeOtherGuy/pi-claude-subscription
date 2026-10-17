@@ -6,6 +6,7 @@ scripts/local/
 claude-code/
 .env
 .env.*
+!.env.example
 *.log
 *.pid
 
@@ -21,3 +22,15 @@ node_modules/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Local agent scratch and orb portal state
+.amp/in/
+.amp/portals/
+
+# Build output and editor files
+dist/
+*.tgz
+.vscode/
+.idea/
+*.swp
+*~

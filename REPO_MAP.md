@@ -147,4 +147,4 @@ None of these is a live Anthropic request test.
 
 ## Ignored/generated paths
 
-- `node_modules/`, `.runtime/`, `.local/`, `docs/internal/`, `scripts/local/`, `.credentials.json`, `.claude/`, `.env*`, `*.log`, `*.pid`.
+- `node_modules/`, `.runtime/`, `.local/`, `docs/internal/`, `scripts/local/`, `.credentials.json`, `.claude/`, `.env*` (except `.env.example`), `.amp/in/`, `.amp/portals/`, `*.log`, `*.pid`, `dist/`, `*.tgz`, editor files.

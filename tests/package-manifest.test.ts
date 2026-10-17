@@ -34,8 +34,8 @@ test("packageManifestExposesPiExtensionWithoutCredentialMaterial", () => {
   });
   assert.deepEqual(pkg.bugs, { url: "https://github.com/5omeOtherGuy/minimalcc-pi/issues" });
   assert.deepEqual(pkg.peerDependencies, {
-    "@earendil-works/pi-ai": ">=0.80.6",
-    "@earendil-works/pi-coding-agent": ">=0.80.6",
+    "@earendil-works/pi-ai": ">=0.80.6 <2",
+    "@earendil-works/pi-coding-agent": ">=0.80.6 <2",
   });
   assert.deepEqual(pkg.scripts, {
     test: "node --test --import tsx \"tests/**/*.test.ts\"",

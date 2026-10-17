@@ -1,6 +1,12 @@
 import type { AnthropicMessagesCompat, ThinkingLevelMap } from "@earendil-works/pi-ai";
 import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 
+/**
+ * Pi >= 1.0 types `ProviderModelConfig` as a union of chat, image, and
+ * classifier entries; this provider registers chat models only.
+ */
+export type ClaudeModelConfig = Extract<ProviderModelConfig, { type?: "chat" }>;
+
 export const CLAUDE_SUBSCRIPTION_PROVIDER_ID = "claude-subscription";
 export const CLAUDE_SUBSCRIPTION_NATIVE_API_ID = "claude-subscription-native";
 
@@ -60,7 +66,7 @@ function claudeSubscriptionModel(
   maxTokens: number,
   thinkingLevelMap: ThinkingLevelMap,
   compat?: AnthropicCompat,
-): ProviderModelConfig {
+): ClaudeModelConfig {
   return {
     id,
     api: CLAUDE_SUBSCRIPTION_NATIVE_API_ID,

@@ -75,7 +75,7 @@ Module-by-module responsibilities are in [`src/INDEX.md`](src/INDEX.md); the tes
 ├── tsconfig.json
 ├── docs/
 │   ├── INDEX.md
-│   ├── current-status.md
+│   ├── architecture.md
 │   ├── model-selection.md
 │   ├── prompt-cache-live-verification.md
 │   ├── rationale.md

@@ -79,7 +79,7 @@ test("packageDryRunContainsOnlyPublicRuntimeAndDocumentationFiles", () => {
     "extensions/minimalcc-pi/index.ts",
     "src/models.ts",
     "src/native-stream-simple.ts",
-    "docs/current-status.md",
+    "docs/architecture.md",
   ]) {
     assert.ok(paths.includes(requiredPath), `package must include ${requiredPath}`);
   }

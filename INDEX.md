@@ -5,7 +5,7 @@ Public Pi package that registers a native `claude-subscription` provider for Cla
 ## Start here
 
 - [`README.md`](README.md) — install, usage, model reference, safety, development.
-- [`docs/current-status.md`](docs/current-status.md) — implementation status, verification scope, known follow-ups.
+- [`docs/architecture.md`](docs/architecture.md) — request shape, models, safety boundaries, credentials, stream guards, replay rules, verification scope.
 - [`REPO_MAP.md`](REPO_MAP.md) — architecture, request flow, invariants, component relationships.
 - [`docs/INDEX.md`](docs/INDEX.md) — documentation index.
 

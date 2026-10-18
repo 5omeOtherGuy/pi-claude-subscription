@@ -1,6 +1,6 @@
-# Current status
+# Architecture
 
-Updated: 2026-10-12
+How the `claude-subscription` provider is built and what it guarantees: public interface, request shape, models and thinking levels, safety boundaries, credentials, caching, stream handling, replay and test scope. Module responsibilities and the request flow are in [`REPO_MAP.md`](../REPO_MAP.md); planned work is tracked in [GitHub issues](https://github.com/5omeOtherGuy/pi-claude-subscription/issues).
 
 ## Stable public interface
 
@@ -9,7 +9,7 @@ Updated: 2026-10-12
 - Model ids: `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-opus-4-7`, `claude-opus-4-7-300k`, `claude-opus-4-8`, `claude-opus-5`, `claude-opus-5-5`, `claude-fable-5`, `claude-fable-5-1`, `claude-sonnet-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`
 - Slash commands: `/claude-subscription-status`, `/claude-subscription-accounts`, `/claude-subscription-import`
 
-## Implementation state
+## Implementation
 
 The provider is a native Pi `streamSimple` implementation that builds Anthropic Messages requests directly, authenticated with Claude Code OAuth credentials loaded at request time. Runtime does not depend on a local proxy, Python virtual environment, or background service. Module responsibilities: [`REPO_MAP.md`](../REPO_MAP.md) and [`src/INDEX.md`](../src/INDEX.md).
 
@@ -108,9 +108,3 @@ npm run check
 ```
 
 `npm run check` does not make live Anthropic requests. Focused gates and the Pi dependency lockstep policy: [`docs/verification-gates.md`](verification-gates.md).
-
-## Known follow-ups
-
-- Improve usage/converter parity with Pi's built-in Anthropic provider.
-- Decide whether to surface silently dropped thinking-signature edge cases (cross-model redacted blocks; same-model blocks without a signature).
-- Add session-stable latching if mid-session cache-retention changes hurt prompt-cache hit rates.

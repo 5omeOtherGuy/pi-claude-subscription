@@ -110,11 +110,11 @@ Notes:
 - `off` on `claude-sonnet-5-5` sends only `thinking: { type: "between_tools" }` with effort `low`: it skips up-front reasoning, but still returns thinking-block progress updates between tool calls. `off` on `claude-haiku-5-5` sends `thinking: { type: "disabled" }` with effort `low`. Neither mode is used at `xhigh` or `max`, where it would return a 400 error. Other adaptive models retain the legacy omission of `thinking`/`output_config`, which does not guarantee thinking is off.
 - Anthropic's API defaults are `high` for Fable 5.1/Sonnet 5.5 and `medium` for Opus 5.5/Haiku 5.5. Pi's selected level is sent explicitly, not replaced with the API default. All four support `low`, `medium`, `high`, `xhigh`, and `max`; Anthropic has no `minimal`, so Pi `minimal` maps to `low`.
 - Verified against Anthropic's [effort reference](https://platform.claude.com/docs/en/build-with-claude/effort) and [per-model thinking rules](https://platform.claude.com/docs/en/build-with-claude/thinking-troubleshooting) on 2026-10-12. Sampling parameters and forced tool choice are not sent. Optional per-message effort and turn-scoped system-message betas are not implemented by this provider; effort is top-level per request.
-- Manual-budget models compute `max_tokens = min(requestedOutputTokens + thinkingBudget, output_cap)`, where Pi `minimal`/`low`/`medium`/`high`/`xhigh` map to `1024`/`4096`/`10240`/`20480`/`32768`. Details: [`docs/current-status.md`](docs/current-status.md#manual-thinking-budgets).
+- Manual-budget models compute `max_tokens = min(requestedOutputTokens + thinkingBudget, output_cap)`, where Pi `minimal`/`low`/`medium`/`high`/`xhigh` map to `1024`/`4096`/`10240`/`20480`/`32768`. Details: [`docs/architecture.md`](docs/architecture.md#manual-thinking-budgets).
 - `claude-opus-4-7-300k` is a provider-local soft-cap route: Pi sees a 300,000-token window for selection, status, and compaction, while native requests send `claude-opus-4-7`.
 - Model metadata is owned by [`src/models.ts`](src/models.ts). Pi's `models.json` `modelOverrides` do not apply to extension-registered providers.
 
-After compaction or a prompt/tool/history edit, newer models can reject old conversation-bound thinking signatures. On that specific HTTP 400, the provider retries once without historical thinking blocks while preserving text and tool calls/results. It does not alter Pi's stored history or retry errors after streaming starts. See [thinking-block replay](docs/current-status.md#thinking-block-replay-across-model-switches).
+After compaction or a prompt/tool/history edit, newer models can reject old conversation-bound thinking signatures. On that specific HTTP 400, the provider retries once without historical thinking blocks while preserving text and tool calls/results. It does not alter Pi's stored history or retry errors after streaming starts. See [thinking-block replay](docs/architecture.md#thinking-block-replay-across-model-switches).
 
 ## Billing and safety
 
@@ -141,7 +141,7 @@ The provider builds Anthropic Messages API requests directly and sends OAuth-onl
 
 The request `system` field is an Anthropic content-block array with the Claude Code identity (`You are Claude Code, Anthropic's official CLI for Claude.`) as a separate first block, followed by Pi's system prompt. Tools use the standard Anthropic schema (`name`, `description`, `input_schema`, optional `cache_control`) without eager/fine-grained tool-input streaming.
 
-Requests add short ephemeral prompt-cache anchors to the shaped system blocks, the last user message block, and the last tool schema. Responses are parsed incrementally and the stream fails closed on lifecycle violations. Architecture, cache policy, stream guards, and replay rules: [`docs/current-status.md`](docs/current-status.md) and [`REPO_MAP.md`](REPO_MAP.md).
+Requests add short ephemeral prompt-cache anchors to the shaped system blocks, the last user message block, and the last tool schema. Responses are parsed incrementally and the stream fails closed on lifecycle violations. Architecture, cache policy, stream guards, and replay rules: [`docs/architecture.md`](docs/architecture.md) and [`REPO_MAP.md`](REPO_MAP.md).
 
 ## Development
 
@@ -158,7 +158,7 @@ npm run check
 
 ## Documentation
 
-[`INDEX.md`](INDEX.md) is the repository entry point; [`REPO_MAP.md`](REPO_MAP.md) maps the source and request flow. [`docs/current-status.md`](docs/current-status.md) covers implementation status, credentials, cache behavior, stream guards, and replay rules; [`docs/slash-commands.md`](docs/slash-commands.md) is the command output reference; [`docs/model-selection.md`](docs/model-selection.md) and [`docs/why-system-blocks.md`](docs/why-system-blocks.md) cover model and system-block choices; [`docs/verification-gates.md`](docs/verification-gates.md) documents test gates and dependency-drift policy; [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`SECURITY.md`](SECURITY.md) cover contribution and security.
+[`INDEX.md`](INDEX.md) is the repository entry point; [`REPO_MAP.md`](REPO_MAP.md) maps the source and request flow. [`docs/architecture.md`](docs/architecture.md) covers the request shape, credentials, cache behavior, stream guards, and replay rules; [`docs/slash-commands.md`](docs/slash-commands.md) is the command output reference; [`docs/model-selection.md`](docs/model-selection.md) and [`docs/why-system-blocks.md`](docs/why-system-blocks.md) cover model and system-block choices; [`docs/verification-gates.md`](docs/verification-gates.md) documents test gates and dependency-drift policy; [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`SECURITY.md`](SECURITY.md) cover contribution and security.
 
 ## License
 

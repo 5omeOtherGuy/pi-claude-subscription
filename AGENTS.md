@@ -3,11 +3,12 @@
 ## Profile
 
 - Purpose: Pi package whose extension registers a native `claude-subscription` provider, authenticated with Claude Code OAuth.
-- Stage: released (repository standard 2026-10-17)
+- Stage: released (repository standard 2026-10-18)
 - Gate: `npm run check` (CI job `gate`)
 - Landing: PR, squash-merged on a green gate; agents land: yes
 - Release: release-please PR; agents release: no
 - Outside issues and PRs: agents triage; outside PRs merge: owner approves
+- Sensitive paths: `src/credentials.ts`, `src/credential-accounts.ts`, `src/native-headers.ts`, `src/redaction.ts` (OAuth credentials and auth headers); `src/native-stream-simple.ts`, `src/native-stream-transport.ts` (provider guard and outbound URL guard); `extensions/minimalcc-pi/` and `package.json` outside dev-dependency bumps (public interface and install manifest); `scripts/secret-scan.mjs`; `.github/workflows/`, `.github/dependabot.yml`, `.github/CODEOWNERS`; `release-please-config.json`, `.release-please-manifest.json`; `AGENTS.md`, `SECURITY.md`
 
 Deliberate deviations from the repository standard, kept on purpose:
 
@@ -39,6 +40,7 @@ Keep changes focused and deterministic; never use or commit real credentials, OA
    - Primary checkout is control-only: never edit files or switch branches there.
    - Preflight: `git status --short --branch && git worktree list && git fetch origin --prune`.
    - Create: `git worktree add ../minimalcc-pi-<slug> -b <type>/<slug> origin/main`, one concern per branch and PR.
+   - A change to a sensitive path (profile above), a public interface, auth or credential handling, CI or release configuration, or agent policy gets an independent review (another agent or the owner) before merge, recorded on the PR against the reviewed head; a later push needs a new review.
    - Merge once the gate is green on the head commit: `gh pr merge <N> --squash --match-head-commit <sha>` (the repo auto-deletes merged head branches). Never use `--admin`; only the owner bypasses checks. When merging as `5omeOtherGuy`, add `--author-email 268151429+5omeOtherGuy@users.noreply.github.com`, and author commits with that address: this repository is public.
    - Cleanup, from outside the worktree: `git worktree remove ../minimalcc-pi-<slug> && git branch -D <branch> && git fetch origin --prune && git worktree prune`.
 2. For behavior changes, add/update deterministic tests first; no live Anthropic/API calls.

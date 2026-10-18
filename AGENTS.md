@@ -1,6 +1,22 @@
 # AGENTS.md
 
-This repo is a Pi package shipping a single extension that registers a native Claude subscription provider, authenticated with Claude Code OAuth. Keep changes focused and deterministic; never use or commit real credentials, OAuth tokens, API keys, `Authorization` / `Bearer` logs, or `.credentials.json` contents.
+## Profile
+
+- Purpose: Pi package whose extension registers a native `claude-subscription` provider, authenticated with Claude Code OAuth.
+- Stage: released (repository standard 2026-10-17)
+- Gate: `npm run check` (CI job `gate`)
+- Landing: PR, squash-merged on a green gate; agents land: yes
+- Release: release-please PR; agents release: no
+- Outside issues and PRs: agents triage; outside PRs merge: owner approves
+
+Deliberate deviations from the repository standard, kept on purpose:
+
+- Per-task worktrees with a control-only primary checkout, even for a single session (Workflow step 1), so parallel agents never share a working tree.
+- No live Anthropic calls anywhere in the test suite, the gate or the docs; the opt-in `PI_LIVE_CLAUDE_*_TEST=1` tests spend the owner's subscription quota and run only when he asks.
+- Focused drift gates per change type in `docs/verification-gates.md`, run before the gate.
+- Every bug fix carries a regression test that fails before the fix.
+
+Keep changes focused and deterministic; never use or commit real credentials, OAuth tokens, API keys, `Authorization` / `Bearer` logs, or `.credentials.json` contents.
 
 ## Read when relevant
 
@@ -13,6 +29,7 @@ This repo is a Pi package shipping a single extension that registers a native Cl
 
 - Install: `npm ci`
 - Test: `npm test`
+- Focused test: `node --test --import tsx tests/<name>.test.ts`
 - Typecheck: `npm run typecheck`
 - Gate: `npm run check` (secret scan, tests incl. pack check, typecheck); CI job `gate` runs exactly this.
 
@@ -21,8 +38,8 @@ This repo is a Pi package shipping a single extension that registers a native Cl
 1. Per-task worktree (parallel-agent safe):
    - Primary checkout is control-only: never edit files or switch branches there.
    - Preflight: `git status --short --branch && git worktree list && git fetch origin --prune`.
-   - Create: `git worktree add ../minimalcc-pi-<slug> -b <branch> origin/main`.
-   - Merge: `gh pr merge <N> --squash [--admin]` (no `--delete-branch`; the repo auto-deletes merged head branches).
+   - Create: `git worktree add ../minimalcc-pi-<slug> -b <type>/<slug> origin/main`, one concern per branch and PR.
+   - Merge once the gate is green on the head commit: `gh pr merge <N> --squash --match-head-commit <sha>` (the repo auto-deletes merged head branches). Never use `--admin`; only the owner bypasses checks. When merging as `5omeOtherGuy`, add `--author-email 268151429+5omeOtherGuy@users.noreply.github.com`, and author commits with that address: this repository is public.
    - Cleanup, from outside the worktree: `git worktree remove ../minimalcc-pi-<slug> && git branch -D <branch> && git fetch origin --prune && git worktree prune`.
 2. For behavior changes, add/update deterministic tests first; no live Anthropic/API calls.
 3. Run `npm run check` before PRs.

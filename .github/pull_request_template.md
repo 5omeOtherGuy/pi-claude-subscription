@@ -4,7 +4,7 @@ Thanks for the PR! Please fill this in. Delete sections that don't apply.
 
 ## Summary
 
-<!-- One or two sentences: what does this change and why? -->
+<!-- One or two sentences: what does this change and why? Add `Fixes #n` when it resolves an issue. -->
 
 ## Type of change
 
@@ -24,8 +24,8 @@ Describe new/updated tests under tests/, or explain why no test is needed
 
 ## Checklist
 
-- [ ] `npm test` passes locally
-- [ ] `npm run typecheck` passes locally
+- [ ] PR title follows Conventional Commits (`fix:`, `feat:`, `docs:` …) in words users understand
+- [ ] `npm run check` (the gate) passes locally
 - [ ] No credentials, OAuth tokens, API keys, or `.credentials.json`
       contents are included in the diff or in the test fixtures
 - [ ] Behavior changes are covered by a deterministic test

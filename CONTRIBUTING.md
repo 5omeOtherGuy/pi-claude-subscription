@@ -1,5 +1,9 @@
 # Contributing
 
+Small fixes (typos, docs, focused bug fixes) are welcome directly as pull requests. For larger changes, open an issue first so we can agree on the approach. Every pull request must pass the gate (`npm run check`, CI job `gate`). Contributions are licensed under the repository's [MIT License](LICENSE); there is no CLA. Participation follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Issues and pull requests are triaged and reviewed within 7 days. An agent may triage, label and reply on the maintainer's behalf; such replies say so. Decisions to decline, roadmap promises and licence questions stay with the maintainer. Unanswered `needs-info` issues close after 30 days (a reply reopens them); a pull request whose review goes unanswered for 30 days gets a reminder, and closes with thanks 30 days later.
+
 ## Ground rules
 
 - Never commit credentials, OAuth tokens, API keys, log fragments containing `Authorization` / `Bearer` headers, or anything from `.credentials.json`.

@@ -12,11 +12,14 @@ updates:
       time: "06:00"
       timezone: "Europe/Berlin"
     open-pull-requests-limit: 5
+    # Wait a few days before adopting a new release (security updates are exempt).
+    cooldown:
+      default-days: 3
     labels:
       - dependencies
-      - npm
+    # Conventional Commits: build(deps): / build(deps-dev):
     commit-message:
-      prefix: deps
+      prefix: build
       include: scope
     groups:
       # Pi packages share provider contracts and private TypeScript members, so
@@ -53,9 +56,15 @@ updates:
       time: "06:00"
       timezone: "Europe/Berlin"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
     labels:
       - dependencies
-      - github-actions
     commit-message:
       prefix: ci
       include: scope
+    groups:
+      github-actions-minor-and-patch:
+        update-types:
+          - minor
+          - patch

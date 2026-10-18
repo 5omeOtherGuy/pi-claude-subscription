@@ -60,10 +60,10 @@ test("only the soft-cap alias diverges between Pi id and native model id", () =>
 });
 
 test("docs publish the model compatibility matrix with each model id", () => {
-  const status = readFileSync(new URL("../docs/current-status.md", import.meta.url), "utf8");
+  const status = readFileSync(new URL("../docs/architecture.md", import.meta.url), "utf8");
   assert.match(status, /##\s+Model compatibility matrix/);
   for (const row of EXPECTED_MATRIX) {
-    assert.ok(status.includes(row.id), `current-status.md matrix must list ${row.id}`);
+    assert.ok(status.includes(row.id), `architecture.md matrix must list ${row.id}`);
   }
   assert.match(status, /claude-opus-4-7-300k.*claude-opus-4-7/s, "matrix must show the 300k soft-cap native alias");
 });

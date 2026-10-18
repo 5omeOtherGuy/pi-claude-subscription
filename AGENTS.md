@@ -6,7 +6,7 @@ This repo is a Pi package shipping a single extension that registers a native Cl
 
 - `REPO_MAP.md` / `INDEX.md` — codebase map.
 - `CONTRIBUTING.md` — contribution and testing rules.
-- `docs/current-status.md` — implementation notes and known follow-ups.
+- `docs/architecture.md` — request shape, models, credentials, stream and replay rules.
 - Open GitHub issues — work state and planned work; issues labelled `enhancement` are hardening work (for example the SSE self-heal set #66–#70). Comment on or close an issue when its work is completed, deferred, or replaced.
 
 ## Commands

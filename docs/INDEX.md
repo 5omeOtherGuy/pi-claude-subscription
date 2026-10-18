@@ -1,6 +1,6 @@
 # Documentation index
 
-- [`current-status.md`](current-status.md) — public implementation status: model matrix, request shape, safety boundaries, credentials, thinking budgets/levels, cache retention, stream guards, replay rules, verification scope.
+- [`architecture.md`](architecture.md) — public interface, model matrix, request shape, safety boundaries, credentials, thinking budgets/levels, cache retention, stream guards, replay rules, verification scope.
 - [`verification-gates.md`](verification-gates.md) — focused test gates by change type plus supply-chain/runtime drift policy.
 - [`slash-commands.md`](slash-commands.md) — exact output shape and interpretation for the three slash commands.
 - [`model-selection.md`](model-selection.md) — choosing between exposed Opus snapshots and thinking-control trade-offs.

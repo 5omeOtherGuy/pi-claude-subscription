@@ -38,18 +38,3 @@ jobs:
 
       - name: Gate
         run: npm run check
-
-  # Temporary: the main ruleset still requires this check name. It passes only
-  # when `gate` succeeded (a skipped required job would count as passing).
-  # Remove it once the ruleset requires `gate` instead.
-  legacy-required-check:
-    name: Typecheck and test (Node 22.x)
-    needs: gate
-    if: always()
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - name: Require gate success
-        env:
-          GATE_RESULT: ${{ needs.gate.result }}
-        run: test "$GATE_RESULT" = success

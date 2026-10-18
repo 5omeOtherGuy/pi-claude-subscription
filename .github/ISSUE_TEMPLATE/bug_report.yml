@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a defect in the claude-subscription provider.
+description: Report a defect in pi-claude-subscription.
 title: "bug: <short summary>"
 labels: ["bug"]
 body:
@@ -29,7 +29,7 @@ body:
       label: Steps to reproduce
       description: Minimal commands or code that trigger the bug.
       placeholder: |
-        1. `pi --model claude-subscription/claude-sonnet-4-6`
+        1. `pi --model anthropic/claude-sonnet-4-6`
         2. ...
         3. Observe: ...
     validations:

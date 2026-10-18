@@ -41,7 +41,7 @@ function unlockedVersion(range: string | undefined): string {
   return range.replace(/^[~^]/, "");
 }
 
-test("pi dev dependency lockstep protects native provider type and schema drift checks", () => {
+test("pi dev dependency lockstep keeps the host transport and loader contracts in step", () => {
   const pkg = readJson<PackageJson>("../package.json");
   const lock = readJson<PackageLock>("../package-lock.json");
   const packages = lock.packages ?? {};
@@ -92,11 +92,10 @@ test("verification gates document drift-sensitive change categories", () => {
   const gates = readFileSync(new URL("../docs/verification-gates.md", import.meta.url), "utf8");
 
   for (const expected of [
-    "Tool JSON parsing / SSE",
-    "Request headers/body/cache",
-    "Credentials/refresh/redaction",
-    "Extension registration/provider guard",
-    "Dependency/model metadata",
+    "Transport delegation / stream contract",
+    "OAuth boundary / redaction",
+    "Extension registration / loader / status command",
+    "Dependency / Pi version",
     "npm run check",
     "No live Anthropic calls",
     "@earendil-works/pi-ai",

@@ -40,10 +40,11 @@ npm run check
 
 ## What to test
 
-- Request construction, header shape, system-block shaping, credential loading, provider registration, and SSE parsing changes need deterministic coverage.
+- Changes to the transport wrapper, the OAuth boundary, redaction, registration or the status command need deterministic coverage. Compare against unwrapped Pi where you can (`tests/transport.test.ts`), and check real loader behavior in `tests/pi-session.test.ts`.
+- A new request or response transform needs a reproduced compatibility problem in supported Pi, a narrow scope, and tests that show it is idempotent and preserves the rest of the request. Problems in Pi itself go to [`docs/upstream-gaps.md`](docs/upstream-gaps.md).
 - Bug fixes should include a regression test that fails before the fix.
 - Documentation-only changes can use the lightest useful verification (link/path and wording scans).
-- Dependency/model metadata changes should run the focused drift gate and then `npm run check`.
+- Dependency or Pi version changes should run the focused drift gate and then `npm run check`.
 
 ## Security issues
 

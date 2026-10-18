@@ -34,8 +34,8 @@ test("packageManifestExposesPiExtensionWithoutCredentialMaterial", () => {
   });
   assert.deepEqual(pkg.bugs, { url: "https://github.com/5omeOtherGuy/pi-claude-subscription/issues" });
   assert.deepEqual(pkg.peerDependencies, {
-    "@earendil-works/pi-ai": ">=0.80.6 <2",
-    "@earendil-works/pi-coding-agent": ">=0.80.6 <2",
+    "@earendil-works/pi-ai": ">=1.3.0 <2",
+    "@earendil-works/pi-coding-agent": ">=1.3.0 <2",
   });
   assert.deepEqual(pkg.scripts, {
     test: "node --test --import tsx \"tests/**/*.test.ts\"",
@@ -45,7 +45,7 @@ test("packageManifestExposesPiExtensionWithoutCredentialMaterial", () => {
   });
   assert.deepEqual(pkg.files, ["extensions/", "src/", "docs/", "CHANGELOG.md", "README.md", "LICENSE"]);
 
-  assert.deepEqual(pkg.pi?.extensions, ["./extensions/minimalcc-pi"]);
+  assert.deepEqual(pkg.pi?.extensions, ["./extensions/pi-claude-subscription"]);
   const extensionPath = new URL(`../${pkg.pi?.extensions?.[0] ?? ""}/index.ts`, import.meta.url);
   assert.ok(existsSync(extensionPath), `extension entry must exist: ${pkg.pi?.extensions?.[0]}/index.ts`);
 
@@ -76,10 +76,11 @@ test("packageDryRunContainsOnlyPublicRuntimeAndDocumentationFiles", () => {
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
-    "extensions/minimalcc-pi/index.ts",
-    "src/models.ts",
-    "src/native-stream-simple.ts",
+    "extensions/pi-claude-subscription/index.ts",
+    "src/transport.ts",
+    "src/diagnostics.ts",
     "docs/architecture.md",
+    "docs/upstream-gaps.md",
   ]) {
     assert.ok(paths.includes(requiredPath), `package must include ${requiredPath}`);
   }
@@ -107,4 +108,27 @@ test("current package version has a versioned changelog section", () => {
     versionHeader,
     "CHANGELOG.md must move release notes from Unreleased into a versioned ## [x.y.z] section matching package.json",
   );
+});
+
+test("runtime source has no credential reader, OAuth hooks, dummy key, or global patching", () => {
+  const files = ["extensions/pi-claude-subscription/index.ts", "src/transport.ts", "src/diagnostics.ts"];
+  const source = files.map((file) => readFileSync(new URL(`../${file}`, import.meta.url), "utf8")).join("\n");
+  for (const pattern of [
+    /\.credentials\.json/,
+    /Claude Code-credentials/,
+    /child_process/,
+    /CLAUDE_CONFIG_DIR/,
+    /auth\.json/,
+    /refreshToken|refresh_token/,
+    /writeFile/,
+    /unregisterProvider/,
+    /globalThis\.fetch\s*=/,
+    /registerApiProvider|resetApiProviders/,
+  ]) {
+    assert.ok(!pattern.test(source), `runtime source must not match ${pattern}`);
+  }
+  // The only registration: no oauth, apiKey (dummy or real), models, baseUrl or headers.
+  assert.deepEqual(source.match(/registerProvider\([^;]*;/g), ['registerProvider(PROVIDER_ID, { api: "anthropic-messages", streamSimple });']);
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { dependencies?: Record<string, string> };
+  assert.equal(pkg.dependencies, undefined, "no runtime dependencies beyond the Pi host");
 });

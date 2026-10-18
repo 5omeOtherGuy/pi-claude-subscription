@@ -14,28 +14,27 @@ Include: description and impact, steps to reproduce or a minimal proof of concep
 
 ## Scope
 
-In scope: repository code (`extensions/`, `src/`, `tests/`, workflows); credential loading, request construction, and SSE handling; any path that could log, transmit unexpectedly, or write OAuth tokens, API keys, or request payloads to disk.
+In scope: repository code (`extensions/`, `src/`, `tests/`, workflows), and any path in this code that could log, send unexpectedly, or write OAuth tokens, API keys or request payloads to disk.
 
-Out of scope: upstream dependencies (`@earendil-works/pi-coding-agent`, Anthropic services, Claude Code, Node.js) and issues requiring an attacker who already has local code execution as the user running Pi.
+Out of scope: upstream dependencies (`@earendil-works/pi-coding-agent`, `@earendil-works/pi-ai`, Anthropic services, Node.js), and issues that need an attacker who already runs code as the user running Pi. Pi itself owns credential storage, OAuth login and refresh; known Pi gaps are listed in [`docs/upstream-gaps.md`](docs/upstream-gaps.md).
 
 ## Threat model
 
-This section documents the abuse cases the provider resists and the defenses that hold each one. Deterministic regression tests cover the boundaries that can be simulated without live calls or real credentials.
+Deterministic tests cover every boundary below. None of them needs live calls or real credentials.
 
-1. **Credential exfiltration.** Prompt injection or a tool may try to make the model reveal `.credentials.json`, environment variables, or request headers. Defense: credentials are loaded at request time and never placed in prompts, tool outputs, or diagnostics; surfaced errors run through redaction. The status/account commands report metadata only; `/claude-subscription-import` deliberately copies the credential blob to a local file the user can delete.
-2. **Billing-route confusion.** Selecting the built-in `anthropic`, `custom-anthropic`, or another Claude provider could bill an API key or metered extra usage. Defense: the input guard, the `before_provider_request` fallback, and the native-stream provider assertion all run before credentials are loaded; non-`claude-subscription` routing is rejected.
-3. **Outbound URL/token exfiltration.** A misconfigured base URL could receive the OAuth token. Defense: the Anthropic Messages URL is hardcoded and validated before fetch; there is no user-configurable request URL.
-4. **Tool-output secret leakage.** Tool results and errors can contain paths, command output, or secrets. Defense: stream/transport diagnostics never store raw tool arguments or results; redaction covers known secrets and header/token patterns; slash-command summaries stay metadata-only.
-5. **Malformed or malicious SSE.** Duplicate lifecycle frames, `tool_use` blocks missing id/name, non-object tool input, or unsupported stop reasons could corrupt state. Defense: the SSE parser and stream applier fail closed with redacted errors and drop executable-looking partial tool calls on failure.
-6. **User-denied or policy-denied tool calls.** Recoverable tool errors must be relayed as tool results, not turned into provider crashes. Defense: the provider passes model-emitted arguments through unchanged and lets Pi-core own validation and permissions; it never mutates arguments to bypass validation.
-7. **Destructive automation.** Defense: tests and diagnostics never run live tools, delete files, alter credentials, or commit/push; the deterministic suite uses fake credentials and mocked network boundaries.
+1. **Credential exfiltration through a destination.** A custom `baseUrl`, credentials in the URL, plain HTTP, or a redirect could send the subscription token elsewhere. Defense: OAuth requests are refused unless they go to `https://api.anthropic.com/v1/messages`, and redirects are not followed (`redirect: "manual"`). The refusal is a local response, so nothing is sent.
+2. **Mixed credentials.** Header overrides could add `x-api-key` or a second `Authorization` to an OAuth request. Defense: the wire headers must contain exactly `Authorization: Bearer <the request's OAuth token>` and no `x-api-key`.
+3. **Billing-route confusion.** A failed OAuth refresh must not silently become an API-key request. Defense: Pi 1.3.0 owns this (a stored OAuth credential owns the provider, with no environment fallback). The tests check this host contract, and it must be re-checked on each Pi upgrade. The extension does not decide whether Anthropic bills a request as included or extra usage.
+4. **Secret leakage in errors and diagnostics.** Upstream error bodies, network-error causes and status output could contain tokens. Defense: token- and header-shaped values and the request's own token are redacted from non-2xx bodies before Pi reads them, and from recorded causes. The status command shows metadata only: no prompt, tool, payload or credential content.
+5. **Shadowed protection.** Another extension's `anthropic` transport registered later bypasses this one. Defense: a startup warning and `NOT COVERED` in the status command. The extension never unregisters other providers.
+6. **Destructive automation.** Defense: tests never run live tools, change real credentials, or commit or push. The suite uses fake credentials and stubbed network calls, and checks that 0.x credential files are never read or written.
 
 ## Handling secrets
 
-Never include real OAuth tokens, API keys, `.credentials.json` contents, or log fragments containing `Authorization`, `Bearer`, `sk-…`, or `anthropic-…` headers in reports, issues, pull requests, or commits. If a report needs sample data, redact it first.
+Never include real OAuth tokens, API keys, `.credentials.json` contents, or log fragments with `Authorization`, `Bearer`, `sk-…` or `anthropic-…` headers in reports, issues, pull requests or commits. Redact sample data first.
 
 Security-sensitive invariants:
 
-- Tests must use fake credentials/tokens and mocked network boundaries.
-- The provider must not fall back to `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `x-api-key`, or `anthropic-api-key`.
-- Errors must redact known secrets and header/token patterns before surfacing.
+- Tests use fake credentials and stubbed network calls.
+- Runtime code never reads Claude Code credential files or the Keychain, never writes credentials, and never patches global `fetch` or the api registry.
+- Errors and diagnostics redact known secrets and header/token patterns before they are shown.

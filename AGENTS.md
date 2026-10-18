@@ -2,18 +2,18 @@
 
 ## Profile
 
-- Purpose: Pi package whose extension registers a native `claude-subscription` provider, authenticated with Claude Code OAuth.
+- Purpose: Pi package whose extension wraps the transport of Pi's built-in `anthropic` provider with an OAuth safety boundary and metadata-only diagnostics.
 - Stage: released (repository standard 2026-10-18)
 - Gate: `npm run check` (CI job `gate`)
 - Landing: PR, squash-merged on a green gate; agents land: yes
 - Release: release-please PR; agents release: no
 - Outside issues and PRs: agents triage; outside PRs merge: owner approves
-- Sensitive paths: `src/credentials.ts`, `src/credential-accounts.ts`, `src/native-headers.ts`, `src/model-catalog.ts` (OAuth credentials and authenticated requests); `src/redaction.ts`, `src/anthropic-sse.ts` (secret redaction); `src/native-request.ts`, `src/native-stream-simple.ts`, `src/native-stream-transport.ts` (Messages URL, provider guard, outbound URL guard); `extensions/minimalcc-pi/`, `src/models.ts`, `package.json` (public interface and install manifest); `package-lock.json`, `.nvmrc` (CI install inputs); `scripts/secret-scan.mjs`; `.github/workflows/`, `.github/dependabot.yml`, `.github/CODEOWNERS`; `release-please-config.json`, `.release-please-manifest.json`; `AGENTS.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/verification-gates.md`, `.github/pull_request_template.md` (policy)
+- Sensitive paths: `src/transport.ts` (host transport resolution, OAuth endpoint/auth/redirect boundary); `src/diagnostics.ts` (secret redaction, request record); `extensions/pi-claude-subscription/`, `package.json` (public interface and install manifest); `package-lock.json`, `.nvmrc` (CI install inputs); `scripts/secret-scan.mjs`; `.github/workflows/`, `.github/dependabot.yml`, `.github/CODEOWNERS`; `release-please-config.json`, `.release-please-manifest.json`; `AGENTS.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/verification-gates.md`, `.github/pull_request_template.md` (policy)
 
 Deliberate deviations from the repository standard, kept on purpose:
 
 - Per-task worktrees with a control-only primary checkout, even for a single session (Workflow step 1), so parallel agents never share a working tree.
-- No live Anthropic calls anywhere in the test suite, the gate or the docs; the opt-in `PI_LIVE_CLAUDE_*_TEST=1` tests spend the owner's subscription quota and run only when he asks.
+- No live Anthropic calls anywhere in the test suite, the gate or the docs; live acceptance spends the owner's subscription quota and runs only when he asks.
 - Focused drift gates per change type in `docs/verification-gates.md`, run before the gate.
 - Every bug fix carries a regression test that fails before the fix.
 
@@ -23,8 +23,8 @@ Keep changes focused and deterministic; never use or commit real credentials, OA
 
 - `REPO_MAP.md` / `INDEX.md` — codebase map.
 - `CONTRIBUTING.md` — contribution and testing rules.
-- `docs/architecture.md` — request shape, models, credentials, stream and replay rules.
-- Open GitHub issues — work state and planned work; issues labelled `enhancement` are hardening work (for example the SSE self-heal set #66–#70). Comment on or close an issue when its work is completed, deferred, or replaced.
+- `docs/architecture.md` — request path, differences kept from native Pi, coverage, test map; `docs/upstream-gaps.md` — gaps to fix in Pi.
+- Open GitHub issues — work state and planned work; issues labelled `enhancement` are hardening work. Comment on or close an issue when its work is completed, deferred, or replaced.
 
 ## Commands
 

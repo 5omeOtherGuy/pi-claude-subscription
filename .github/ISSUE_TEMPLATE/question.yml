@@ -31,7 +31,7 @@ body:
         Include relevant non-secret details, such as the command you ran,
         model/provider selection, operating system, Node.js version, or docs you followed.
       placeholder: |
-        - Command: `pi --model claude-subscription/claude-sonnet-4-6`
+        - Command: `pi --model anthropic/claude-sonnet-4-6`
         - Node.js: v22.x
         - OS: macOS / Linux / Windows WSL
 

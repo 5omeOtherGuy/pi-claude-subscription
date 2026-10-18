@@ -1,44 +1,20 @@
 # Slash-command reference
 
-The extension registers three local-only slash commands. They run in-process with no Anthropic model call and record no prompt text, tool arguments, model output, or credentials.
+The extension registers one slash command, `/claude-subscription-status`. It runs inside Pi, makes no request, reads no credential files, and shows no prompt, tool, payload or credential content. If Pi reports it as unknown, the extension did not load: check `pi list` and re-run `pi install`.
 
-| Command | What it reports or changes |
-|---|---|
-| `/claude-subscription-status` | Provider wiring, active provider, discovered account, token freshness, refresh availability, and actionable credential errors. |
-| `/claude-subscription-accounts` | Discovers Claude Code OAuth accounts and saves the selected source in minimalcc-owned state. |
-| `/claude-subscription-import` | Copies the selected Claude Code OAuth credential blob into minimalcc-owned state and selects that imported copy. |
+The output is one notification, at level `info` when the wrapper is in the request path and `warning` when it is not.
 
-If Pi reports any of these as unknown, the extension did not load — check `pi list` and re-run `pi install`.
-
-## `/claude-subscription-status`
-
-Output is a single notification at level `info`, `warning`, or `error` depending on credential health. Example shape:
-
-```
-claude-subscription uses native Anthropic Messages with Claude Code OAuth on native API claude-subscription-native.
-active_provider=claude-subscription
-credentials=<source> account=<email-or-unknown> subscription=<tier> token=<fresh|near-expiry|expired|unknown> refresh=<available|missing> accounts=<count> [action=<next step>]
+```text
+pi-claude-subscription <version> on Pi <host version>
+route: provider anthropic (anthropic-messages) -> OAuth gate -> Pi's own Anthropic transport
+login: Pi built-in (/login anthropic)
+anthropic auth: <OAuth|API key or other> (<source>) | not configured
+current model: <provider>/<id> | none
+not covered: direct compat.streamSimple callers (they bypass registered providers)
+last OAuth request: <ISO time> model=<provider>/<id> [status=<HTTP>] [request_id=<id>] [stop=<reason>] [anthropic_error=<type>] [blocked=<destination|wire_auth|redirect>] [network_error=<redacted cause>] [usage input=<n> output=<n> cache_read=<n> cache_write=<n>]
 ```
 
-Interpretation:
-
-- `active_provider` is informational and can differ from `claude-subscription`.
-- `token` reports local freshness from the expiry timestamp; expired/near-expiry credentials are warnings, and request-time refresh still happens when `refresh=available`.
-- `refresh=missing` on an expired token is actionable: re-run Claude Code login.
-- Missing credentials produce an error telling you to run Claude Code login or `/claude-subscription-import` once credentials exist.
-- The status path never reads or falls back to `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `x-api-key`, or Pi's generic `auth.json`.
-
-## `/claude-subscription-accounts`
-
-- Discovers usable Claude Code OAuth credentials from macOS `Claude Code-credentials*` Keychain services and the standard credentials file.
-- If more than one account is found, shows a selector labeled by account metadata, subscription/tier metadata when present, and source.
-- Saves only the selected source descriptor under Pi's agent directory at `pi-claude-subscription/credential-state.json`.
-- Does not mutate Pi's generic `auth.json` or override the built-in `anthropic` provider.
-
-## `/claude-subscription-import`
-
-- Runs the same discovery/selection flow as `/claude-subscription-accounts`.
-- Copies the selected raw credential JSON into `pi-claude-subscription/imported-credentials.json` under Pi's agent directory with local-user file permissions.
-- Selects that imported copy for future `claude-subscription` requests.
-
-The imported file is a duplicate OAuth credential secret. Keep it private and delete it when you no longer want the duplicate.
+- `route: NOT COVERED` means another extension, or another copy of this one, registered an `anthropic` transport after this extension. Requests go through that transport instead. Load only one.
+- `login: an extension overrides anthropic OAuth` means some extension replaced Pi's `/login anthropic`. This extension never does that and does not undo it.
+- `anthropic auth` comes from Pi's auth snapshot; `source` is Pi's label (`stored`, `environment`, `runtime`, …).
+- `last OAuth request` covers the most recent OAuth request this wrapper handled in this Pi process. API-key requests are not recorded. `anthropic_error` is Anthropic's error type, not the message text. `blocked` names the local check that stopped the request. The usage counters are Anthropic's numbers for that request.

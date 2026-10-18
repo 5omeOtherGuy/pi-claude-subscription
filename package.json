@@ -1,14 +1,13 @@
 {
   "name": "pi-claude-subscription",
   "version": "0.1.0",
-  "description": "Pi package providing a native Claude subscription provider that authenticates with Claude Code OAuth.",
+  "description": "Pi package that keeps Claude Pro/Max OAuth requests on Pi's built-in Anthropic provider inside a strict endpoint and auth boundary, with metadata-only diagnostics.",
   "license": "MIT",
   "type": "module",
   "keywords": [
     "pi-package",
     "claude",
     "anthropic",
-    "claude-code",
     "oauth"
   ],
   "homepage": "https://github.com/5omeOtherGuy/pi-claude-subscription#readme",
@@ -32,12 +31,12 @@
   },
   "pi": {
     "extensions": [
-      "./extensions/minimalcc-pi"
+      "./extensions/pi-claude-subscription"
     ]
   },
   "peerDependencies": {
-    "@earendil-works/pi-ai": ">=0.80.6 <2",
-    "@earendil-works/pi-coding-agent": ">=0.80.6 <2"
+    "@earendil-works/pi-ai": ">=1.3.0 <2",
+    "@earendil-works/pi-coding-agent": ">=1.3.0 <2"
   },
   "scripts": {
     "test": "node --test --import tsx \"tests/**/*.test.ts\"",

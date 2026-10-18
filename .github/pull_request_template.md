@@ -11,7 +11,7 @@ CHANGELOG.md from it.
 
 ## Changed behavior
 
-<!-- What behaves differently for users or callers afterwards? "None" for a pure refactor or docs. -->
+<!-- What behaves differently for users, callers or contributors afterwards? "None" only when behavior, rules and executable instructions are unchanged. -->
 
 ## Constraints touched
 
@@ -31,7 +31,7 @@ before the fix), the focused gate from docs/verification-gates.md you ran, and
 
 ## Sensitive path
 
-- [ ] This PR changes none of the sensitive paths listed in the `AGENTS.md` profile, a public interface, auth or credential handling, CI or release configuration, or agent policy.
+- [ ] This PR changes none of: a sensitive path listed in the `AGENTS.md` profile, a public interface, security-sensitive code, auth or credential handling, install or setup, deployment, CI or release configuration, agent policy (`AGENTS.md`, `.agents/`, `.githooks/`), or docs that alter rules or executable instructions.
 - [ ] It does, and an independent review (another agent or the owner) of the reviewed head commit is recorded on this PR; a later push needs a new review.
 
 ## Checklist

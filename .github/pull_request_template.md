@@ -1,37 +1,42 @@
 <!--
 Thanks for the PR! Please fill this in. Delete sections that don't apply.
+Title: Conventional Commits, in words users understand (`fix: …`, `feat: …`,
+`docs: …`); PRs are squash-merged with it and release-please builds
+CHANGELOG.md from it.
 -->
 
-## Summary
+## Intent
 
-<!-- One or two sentences: what does this change and why? Add `Fixes #n` when it resolves an issue. -->
+<!-- Why this change? Add `Fixes #n` when it resolves an issue. -->
 
-## Type of change
+## Changed behavior
 
-- [ ] Bug fix (`fix:`)
-- [ ] New feature (`feat:`)
-- [ ] Documentation only (`docs:`)
-- [ ] CI / tooling (`ci:` / `chore:`)
-- [ ] Refactor (`refactor:`) — no behavior change
-- [ ] Other:
+<!-- What behaves differently for users, callers or contributors afterwards? "None" only when behavior, rules and executable instructions are unchanged. -->
 
-## How was this tested?
+## Constraints touched
 
 <!--
-Describe new/updated tests under tests/, or explain why no test is needed
-(e.g. docs-only). Paste the relevant `npm test` output if useful.
+Which repository rules does this touch (AGENTS.md, CONTRIBUTING.md,
+docs/architecture.md, docs/verification-gates.md)? For example: OAuth-only
+headers, no live Anthropic calls, the Pi peer range, the request shape.
 -->
+
+## Evidence
+
+<!--
+New or updated deterministic tests under tests/ (a bug fix needs one that fails
+before the fix), the focused gate from docs/verification-gates.md you ran, and
+`npm run check` output. Docs-only: the link and wording checks you did.
+-->
+
+## Sensitive path
+
+- [ ] This PR changes none of: a sensitive path listed in the `AGENTS.md` profile, a public interface, security-sensitive code, auth or credential handling, install or setup, deployment, CI or release configuration, agent policy (`AGENTS.md`, `.agents/`, `.githooks/`), or docs that alter rules or executable instructions.
+- [ ] It does, and an independent review (another agent or the owner) of the reviewed head commit is recorded on this PR; a later push needs a new review.
 
 ## Checklist
 
-- [ ] PR title follows Conventional Commits (`fix:`, `feat:`, `docs:` …) in words users understand
 - [ ] `npm run check` (the gate) passes locally
 - [ ] No credentials, OAuth tokens, API keys, or `.credentials.json`
       contents are included in the diff or in the test fixtures
-- [ ] Behavior changes are covered by a deterministic test
 - [ ] Public-facing changes are reflected in `README.md` and/or `docs/`
-- [ ] Linked any related issue: `Fixes #...` / `Refs #...`
-
-## Notes for the reviewer
-
-<!-- Optional: anything specific you want eyes on, or known caveats. -->

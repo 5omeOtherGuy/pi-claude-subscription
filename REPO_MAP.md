@@ -121,6 +121,7 @@ Module-by-module responsibilities are in [`src/INDEX.md`](src/INDEX.md); the tes
     ├── live-opus46-routing.test.ts
     ├── model-matrix.test.ts
     ├── native-convert-messages-memo.test.ts
+    ├── native-surrogates.test.ts
     ├── native-credentials.test.ts
     ├── native-fable-5.test.ts
     ├── native-new-models.test.ts

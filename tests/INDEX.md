@@ -12,6 +12,7 @@ Deterministic Node tests use fake credentials, fake tokens, and mocked network/t
 - `live-opus46-routing.test.ts` — opt-in live check that selecting `claude-opus-4-6` sends Opus 4.6 and the response model confirms it.
 - `model-matrix.test.ts` — keeps the documented compatibility matrix in sync with `MODELS` and asserts the threat-model headings/secret-shape absence in `SECURITY.md`.
 - `native-convert-messages-memo.test.ts` — memoized message conversion is byte-identical across a multi-turn fixture, reuses cached entries, reuses prior turns on append, and does not reuse model-dependent assistant conversions.
+- `native-surrogates.test.ts` — valid emoji reach Anthropic intact in user, assistant, tool-result and foreign-thinking text; unpaired surrogates become replacement characters.
 - `native-credentials.test.ts` — credential loading, expired/forced refresh/persistence, refresh coalescing, token caching, stale-write avoidance, Keychain fallback, `ANTHROPIC_*` non-fallback, OAuth-only headers.
 - `native-fable-5.test.ts` — Fable 5 registration, adaptive payloads, fallback parameter/beta, fallback/refusal SSE parsing, pre-output and mid-stream fallback handling, terminal refusal, and beta rejection/retry/latch.
 - `native-new-models.test.ts` — newer models keep subscription metadata and zero API cost and handle level-less requests.

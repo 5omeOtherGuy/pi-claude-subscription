@@ -12,21 +12,32 @@ updates:
       time: "06:00"
       timezone: "Europe/Berlin"
     open-pull-requests-limit: 5
+    # Wait a few days before adopting a new release (security updates are exempt).
+    cooldown:
+      default-days: 3
     labels:
       - dependencies
-      - npm
+    # Conventional Commits: build(deps): / build(deps-dev):
     commit-message:
-      prefix: deps
+      prefix: build
       include: scope
-    # Group all non-major updates into one PR per week to reduce noise.
     groups:
+      # Pi packages share provider contracts and private TypeScript members, so
+      # they move together in one PR, majors included (docs/verification-gates.md).
+      # Listed first: a dependency joins the first group it matches.
+      pi:
+        patterns:
+          - "@earendil-works/*"
+        update-types:
+          - major
+          - minor
+          - patch
+      # Group all other non-major updates into one PR per week to reduce noise.
       npm-minor-and-patch:
         update-types:
           - minor
           - patch
     ignore:
-      # peerDependency: pinned to "*" intentionally; updating doesn't help.
-      - dependency-name: "@earendil-works/pi-coding-agent"
       # Match the Node typings to engines.node >=22.19.0: allow 22.19.x
       # patch updates, but do not let Dependabot widen to newer Node minors
       # or majors where TypeScript could accept APIs missing from the runtime
@@ -45,9 +56,15 @@ updates:
       time: "06:00"
       timezone: "Europe/Berlin"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
     labels:
       - dependencies
-      - github-actions
     commit-message:
       prefix: ci
       include: scope
+    groups:
+      github-actions-minor-and-patch:
+        update-types:
+          - minor
+          - patch

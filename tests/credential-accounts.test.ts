@@ -15,7 +15,7 @@ import {
 const NOW = Date.UTC(2026, 0, 2);
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), "minimalcc-accounts-"));
+  return mkdtempSync(join(tmpdir(), "pi-claude-subscription-accounts-"));
 }
 
 function fakeCredentials(fields: Record<string, unknown> = {}): unknown {
@@ -115,7 +115,7 @@ test("selectedKeychainAccountTakesPrecedenceOverDefaultCredentialFile", async ()
     rmSync(dir, { recursive: true, force: true });
   }
 });
-test("importsSelectedClaudeCodeCredentialsIntoMinimalccOwnedState", async () => {
+test("importsSelectedClaudeCodeCredentialsIntoPackageOwnedState", async () => {
   const dir = tempDir();
   const credentialPath = join(dir, ".credentials.json");
   const statePath = join(dir, "credential-state.json");
@@ -129,7 +129,7 @@ test("importsSelectedClaudeCodeCredentialsIntoMinimalccOwnedState", async () => 
     );
 
     assert.equal(imported.status, "imported");
-    assert.ok(existsSync(importedCredentialPath), "import command must write only minimalcc-owned credential state");
+    assert.ok(existsSync(importedCredentialPath), "import command must write only package-owned credential state");
     assert.match(readFileSync(importedCredentialPath, "utf8"), /fake-import-source-token/);
 
     writeFileSync(credentialPath, JSON.stringify(fakeCredentials({ accessToken: "fake-rotated-source-token" })));

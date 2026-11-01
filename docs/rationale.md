@@ -1,39 +1,33 @@
 # Why this package exists
 
-This expands on the README's one-paragraph rationale for anyone evaluating whether the package is right for them.
+When a Claude session goes badly, you usually cannot tell why. The model Anthropic serves may have changed, the Claude Code harness around it may have got in the way, or your own prompt may be the problem. Public reports of model regressions tend to blur these three causes.
 
-## Harness vs. model
+This package lets you change one of them. With a Claude Code subscription, you can run the same task in Pi on the same account and the same model ID, and compare the results. The package is not a benchmark suite, and it does not claim that any Anthropic change caused any regression.
 
-Public reports of Claude model regressions usually conflate three variables: the model weights and routing Anthropic serves; the Claude Code harness around them (a large system prompt, tool descriptions, compaction, CLI behavior that cannot be disabled from outside); and the user's own prompts, tools, and workflow.
+## What the comparison does not remove
 
-Without isolating the harness, it is hard to tell whether a bad session is a model regression, a harness interaction, or a local prompt problem. This package makes the harness controllable for users with an existing Claude Code subscription, so the same tasks can run under a leaner, auditable harness (Pi) and be compared: same account, same model id, different agent loop.
+A session through this provider is not a bare Pi session. Every request sends the Claude Code identity, `You are Claude Code, Anthropic's official CLI for Claude.`, as the first `system` block, and it lists the `claude-code-20250219` beta in the `anthropic-beta` header. The subscription route is sensitive to request shape, and other shapes have failed with a generic 429. You pay that price to use the route, so count it as part of any result you compare. One sentence of identity is still far less than Claude Code's own system prompt, which this provider does not send.
 
-It is not a benchmark suite and does not claim that any Anthropic change caused any specific regression. It avoids Claude Code's full system prompt as far as the OAuth route permits; because that route validates request shape, the provider still sends the Claude Code identity as the first `system` block, followed by Pi's system prompt. See [`why-system-blocks.md`](why-system-blocks.md).
+Pi's system prompt follows as the second block, with one edit. The provider removes the three lines that match `DOC_ROUTING_PREFIXES` in [`src/constants.ts`](../src/constants.ts), which tell the model to read Pi's own documentation. Tools keep Pi's names, descriptions, and schemas. Conversation history stays as Pi holds it, except where the API forces a change, such as signed thinking from a different model. [`docs/architecture.md`](architecture.md) has the full request shape and the replay rules.
 
-## Intended use and fair use
+The rule behind these choices is to change what the model sees only when the route requires it or the effect can be measured. For the same reason, the provider adds no hidden compaction and no tool filtering.
 
-Use this package to investigate harness effects on your own tasks, prefer Pi's minimal agent loop for day-to-day work, and get subscription-backed Claude access without a proxy or API-key billing.
+## Why a native provider and not a proxy
 
-Do **not** use it with API-capacity or arbitrage harnesses to convert a consumer subscription into a general replacement for paid API usage. If your workload belongs on the API, use the API and pay for it.
+A proxy is one more process to install, monitor, and trust with your token. This package has no daemon, no local proxy, no Python service, and no open port. Pi loads an extension, and the extension registers the provider.
 
-Native requests include prompt-cache anchors and optional long-cache retention where supported, so repeated Pi sessions reuse stable prefixes. These are quota-hygiene measures, not a guarantee of identical behavior to Claude Code internals.
+The provider has its own client. Pi supplies the agent loop and calls the provider's `streamSimple` function. The provider then builds the request, parses the stream, and owns its model metadata in [`src/models.ts`](../src/models.ts). Owning that client makes these guarantees possible:
 
-## Why a native Pi provider, not a proxy
+- The provider reads the Claude Code OAuth token for each request, and only after the stream confirms that the provider is `claude-subscription`.
+- It never sends `x-api-key`, and it never reads `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN`.
+- The transport refuses any URL other than Anthropic's Messages endpoint.
+- The stream ends with an error on malformed or out-of-order SSE events.
+- Prompt-cache anchors and long-cache retention are TypeScript that you can read, with mocked tests. They save quota on repeated prefixes, but they do not promise the same behavior as Claude Code.
 
-A native Pi integration is simpler and safer than a proxy bridge:
+The cost is upkeep. This provider does not pick up Pi's Anthropic request changes automatically, so each one needs a change here. Until that change lands, this route lags Pi's built-in one. For a package that handles OAuth tokens, a client you can audit is worth that work.
 
-- No background daemon, local proxy, Python service, or port binding to install, monitor, or trust.
-- Pi owns provider registration, model metadata, thinking-level mapping, and request/stream conversion.
-- OAuth credentials are loaded only at request time from Claude Code's local store, and the native stream rejects non-`claude-subscription` routing before loading them.
-- Requests use OAuth-only headers and intentionally omit `x-api-key`, `ANTHROPIC_API_KEY`, and `ANTHROPIC_AUTH_TOKEN` fallbacks.
-- Cache behavior is visible in source: system-block shaping, cache-control anchors, and retention are implemented in TypeScript with mocked tests.
-- Streaming is parsed incrementally and fails closed on malformed or out-of-order SSE lifecycle events.
-- Pi's `models.json` `modelOverrides` do not apply to this extension-registered provider; change [`src/models.ts`](../src/models.ts) or fork the package to alter model metadata.
+## Use it for your own subscription only
 
-## Project principles
+This package is for one person using their own subscription on their own machine. Do not use it for resale or pooled access, and do not use it as a replacement for API usage. Do not connect it to API-capacity or arbitrage harnesses. If your workload belongs on the API, use the API and pay for it.
 
-- Measured, redacted evidence over anecdotes.
-- Minimal model-visible intervention: no prompt rewrites, hidden compaction, or tool filtering unless impact is measurable.
-- Transparent quota hygiene without committing prompts, logs, or credentials.
-- Compatibility through narrow shims: only the system-block shape and OAuth headers required by the route, with Pi's prompt and tool loop authoritative.
-- Individual local subscription use only — not resale, pooled access, or avoiding API billing for workloads that belong on the API.
+Keep the evidence honest too. Base a claim about a regression on measurements, and keep prompts, logs, and credentials out of anything you publish.

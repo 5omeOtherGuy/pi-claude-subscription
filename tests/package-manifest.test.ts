@@ -27,24 +27,25 @@ test("packageManifestExposesPiExtensionWithoutCredentialMaterial", () => {
   assert.match(pkg.description ?? "", /Pi package/);
   assert.equal(pkg.license, "MIT");
   assert.equal(pkg.type, "module");
-  assert.equal(pkg.homepage, "https://github.com/5omeOtherGuy/minimalcc-pi#readme");
+  assert.equal(pkg.homepage, "https://github.com/5omeOtherGuy/pi-claude-subscription#readme");
   assert.deepEqual(pkg.repository, {
     type: "git",
-    url: "git+https://github.com/5omeOtherGuy/minimalcc-pi.git",
+    url: "git+https://github.com/5omeOtherGuy/pi-claude-subscription.git",
   });
-  assert.deepEqual(pkg.bugs, { url: "https://github.com/5omeOtherGuy/minimalcc-pi/issues" });
+  assert.deepEqual(pkg.bugs, { url: "https://github.com/5omeOtherGuy/pi-claude-subscription/issues" });
   assert.deepEqual(pkg.peerDependencies, {
-    "@earendil-works/pi-ai": ">=0.80.6",
-    "@earendil-works/pi-coding-agent": ">=0.80.6",
+    "@earendil-works/pi-ai": ">=0.80.6 <2",
+    "@earendil-works/pi-coding-agent": ">=0.80.6 <2",
   });
   assert.deepEqual(pkg.scripts, {
     test: "node --test --import tsx \"tests/**/*.test.ts\"",
     typecheck: "tsc --noEmit",
-    check: "npm test && npm run typecheck",
+    "secret-scan": "node scripts/secret-scan.mjs",
+    check: "npm run -s secret-scan && node --test --test-reporter=dot --import tsx \"tests/**/*.test.ts\" && npm run -s typecheck",
   });
   assert.deepEqual(pkg.files, ["extensions/", "src/", "docs/", "CHANGELOG.md", "README.md", "LICENSE"]);
 
-  assert.deepEqual(pkg.pi?.extensions, ["./extensions/minimalcc-pi"]);
+  assert.deepEqual(pkg.pi?.extensions, ["./extensions/pi-claude-subscription"]);
   const extensionPath = new URL(`../${pkg.pi?.extensions?.[0] ?? ""}/index.ts`, import.meta.url);
   assert.ok(existsSync(extensionPath), `extension entry must exist: ${pkg.pi?.extensions?.[0]}/index.ts`);
 
@@ -75,10 +76,10 @@ test("packageDryRunContainsOnlyPublicRuntimeAndDocumentationFiles", () => {
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
-    "extensions/minimalcc-pi/index.ts",
+    "extensions/pi-claude-subscription/index.ts",
     "src/models.ts",
     "src/native-stream-simple.ts",
-    "docs/current-status.md",
+    "docs/architecture.md",
   ]) {
     assert.ok(paths.includes(requiredPath), `package must include ${requiredPath}`);
   }
@@ -99,7 +100,8 @@ test("current package version has a versioned changelog section", () => {
   assert.match(pkg.version ?? "", /^\d+\.\d+\.\d+$/, "package version must be a release semver");
 
   const changelog = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");
-  const versionHeader = new RegExp(`^## \\[${pkg.version}\\](?:\\s+-\\s+.*)?$`, "m");
+  // Hand-kept "## [x.y.z] - date" or release-please "## [x.y.z](compare-url) (date)".
+  const versionHeader = new RegExp(`^## \\[?${(pkg.version ?? "").replaceAll(".", "\\.")}\\]?(?=$|[\\s(])`, "m");
   assert.match(
     changelog,
     versionHeader,

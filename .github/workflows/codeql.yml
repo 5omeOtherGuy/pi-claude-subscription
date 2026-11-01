@@ -15,23 +15,26 @@ on:
     - cron: "24 5 * * 1"
   workflow_dispatch:
 
-# Cancel previous CodeQL runs on the same ref when a new commit arrives.
 concurrency:
-  group: codeql-${{ github.ref }}
-  cancel-in-progress: true
+  # PR runs share a group per ref so a new push cancels the superseded run;
+  # every other run gets its own group so nothing on main is cancelled or dropped.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
-  # Required for CodeQL to upload SARIF results to the Security tab.
-  security-events: write
-  # Required for the CodeQL action to read the workflow's own status.
-  actions: read
 
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+      # Required for CodeQL to upload SARIF results to the Security tab.
+      security-events: write
+      # Required for the CodeQL action to read the workflow's own status.
+      actions: read
 
     strategy:
       fail-fast: false
@@ -40,10 +43,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           languages: ${{ matrix.language }}
           # "security-and-quality" is broader than the default; trades a few
@@ -51,6 +56,6 @@ jobs:
           queries: security-and-quality
 
       - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           category: "/language:${{ matrix.language }}"

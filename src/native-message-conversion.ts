@@ -47,7 +47,7 @@ export function resetSanitizeSurrogatesCallCountForTests(): void {
 
 function sanitizeSurrogates(text: string): string {
   sanitizeSurrogatesCallCount += 1;
-  return text.replace(/[\uD800-\uDFFF]/g, "\uFFFD");
+  return text.replace(/\p{Surrogate}/gu, "\uFFFD");
 }
 
 // Per-message conversion memos. Pi history is append-only and prior Message

@@ -1,7 +1,7 @@
 {
   "name": "pi-claude-subscription",
   "version": "0.1.0",
-  "description": "Pi package providing a native Claude subscription provider that authenticates with Claude Code OAuth.",
+  "description": "Pi package for using Claude Pro and Max subscriptions in the Pi coding agent through Claude Code OAuth.",
   "license": "MIT",
   "type": "module",
   "keywords": [
@@ -9,15 +9,20 @@
     "claude",
     "anthropic",
     "claude-code",
-    "oauth"
+    "oauth",
+    "pi-extension",
+    "pi-coding-agent",
+    "claude-subscription",
+    "claude-pro",
+    "claude-max"
   ],
-  "homepage": "https://github.com/5omeOtherGuy/minimalcc-pi#readme",
+  "homepage": "https://github.com/5omeOtherGuy/pi-claude-subscription#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/5omeOtherGuy/minimalcc-pi.git"
+    "url": "git+https://github.com/5omeOtherGuy/pi-claude-subscription.git"
   },
   "bugs": {
-    "url": "https://github.com/5omeOtherGuy/minimalcc-pi/issues"
+    "url": "https://github.com/5omeOtherGuy/pi-claude-subscription/issues"
   },
   "files": [
     "extensions/",
@@ -32,23 +37,27 @@
   },
   "pi": {
     "extensions": [
-      "./extensions/minimalcc-pi"
+      "./extensions/pi-claude-subscription"
     ]
   },
   "peerDependencies": {
-    "@earendil-works/pi-ai": ">=0.80.6",
-    "@earendil-works/pi-coding-agent": ">=0.80.6"
+    "@earendil-works/pi-ai": ">=0.80.6 <2",
+    "@earendil-works/pi-coding-agent": ">=0.80.6 <2"
   },
   "scripts": {
     "test": "node --test --import tsx \"tests/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "check": "npm test && npm run typecheck"
+    "secret-scan": "node scripts/secret-scan.mjs",
+    "check": "npm run -s secret-scan && node --test --test-reporter=dot --import tsx \"tests/**/*.test.ts\" && npm run -s typecheck"
   },
   "devDependencies": {
-    "@earendil-works/pi-ai": "^0.87.1",
-    "@earendil-works/pi-coding-agent": "^0.87.1",
+    "@earendil-works/pi-ai": "^1.4.0",
+    "@earendil-works/pi-coding-agent": "^1.4.0",
     "@types/node": "~22.19.0",
-    "tsx": "^4.22.4",
-    "typescript": "^6.0.3"
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "undici": "8.12.2"
   }
 }

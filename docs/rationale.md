@@ -28,7 +28,7 @@ A native Pi integration is simpler and safer than a proxy bridge:
 - Requests use OAuth-only headers and intentionally omit `x-api-key`, `ANTHROPIC_API_KEY`, and `ANTHROPIC_AUTH_TOKEN` fallbacks.
 - Cache behavior is visible in source: system-block shaping, cache-control anchors, and retention are implemented in TypeScript with mocked tests.
 - Streaming is parsed incrementally and fails closed on malformed or out-of-order SSE lifecycle events.
-- Pi's `models.json` `modelOverrides` do not apply to this extension-registered provider; change [`src/models.ts`](../src/models.ts) or fork the package to alter model metadata.
+- Pi's `models.json` `modelOverrides` can adjust this provider's model metadata; the defaults live in [`src/models.ts`](../src/models.ts).
 
 ## Project principles
 

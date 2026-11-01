@@ -122,7 +122,7 @@ A refresh follows these rules:
 - The provider adds a new model only when the API supplies usable context, output, and capability data, and only if the model uses adaptive thinking.
 - Known models keep their built-in settings and limits. The API decides only whether they stay on the list.
 - A known model leaves the list if the API no longer lists it, under its own name or a dated name.
-- A package update adds its new built-in models to the saved list.
+- After a package update, offline and failed refreshes also show its new built-in models, until the next successful refresh.
 
 The API list may not match the models enabled for your subscription, so a listed model can still fail when you call it.
 

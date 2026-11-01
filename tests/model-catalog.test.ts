@@ -113,9 +113,10 @@ test("Claude catalog stores API entries only, so a later package version re-appl
 });
 
 test("Claude catalog ignores a damaged saved list and does not save an unusable response", async () => {
+  const unusablePath = freshCachePath();
+  await createClaudeModelCatalog(listing({ id: "not-claude", display_name: "Other" }), async () => FAKE_TOKEN, unusablePath)(context());
+  assert.equal(existsSync(unusablePath), false);
   const cachePath = freshCachePath();
-  await createClaudeModelCatalog(listing({ id: "not-claude", display_name: "Other" }), async () => FAKE_TOKEN, cachePath)(context());
-  assert.equal(existsSync(cachePath), false);
   await createClaudeModelCatalog(listing(newModelEntry), async () => FAKE_TOKEN, cachePath)(context());
   for (const damaged of ["not json", "{}", '{"data":[{"id":"not-claude"}]}']) {
     writeFileSync(cachePath, damaged);
@@ -156,12 +157,13 @@ test("Claude catalog drops a local name when its dated entry is retired", async 
 });
 
 test("Claude catalog saves nothing from a partial listing and only the fields it reads", async () => {
-  const cachePath = freshCachePath();
+  const partialPath = freshCachePath();
   let calls = 0;
   await createClaudeModelCatalog(async () => (++calls === 1
     ? Response.json({ data: [newModelEntry], has_more: true, last_id: "next" })
-    : new Response("down", { status: 500 })), async () => FAKE_TOKEN, cachePath)(context());
-  assert.equal(existsSync(cachePath), false);
+    : new Response("down", { status: 500 })), async () => FAKE_TOKEN, partialPath)(context());
+  assert.equal(existsSync(partialPath), false);
+  const cachePath = freshCachePath();
   await createClaudeModelCatalog(listing({ ...newModelEntry, unexpected: "field" }), async () => FAKE_TOKEN, cachePath)(context());
   const saved = readFileSync(cachePath, "utf8");
   assert.ok(!saved.includes("unexpected"));

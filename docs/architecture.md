@@ -66,7 +66,7 @@ Manual-budget models are `claude-haiku-4-5`, `claude-sonnet-4-6`, and `claude-op
 - Built-in `anthropic` models may remain visible; visibility is not a safety boundary.
 - Subscription models use the isolated `claude-subscription-native` API id rather than replacing Pi's shared `anthropic-messages` handler.
 - The native stream rejects non-`claude-subscription` routing before loading credentials, and the input path blocks known non-subscription Claude providers (`anthropic`, `custom-anthropic`, `meridian`).
-- Stale extension contexts fail closed for Claude-shaped request payloads; Pi swallows `before_provider_request` hook errors, so that hook is a fallback layer, not the only boundary.
+- The input path refuses prompts from a stale extension context. For Claude-shaped payloads, the `before_provider_request` hook also throws on a stale context, but Pi catches that error and still sends the request, so the hook only reports the problem.
 
 ## Credential handling
 

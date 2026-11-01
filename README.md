@@ -212,7 +212,7 @@ One gap broke even at about 146,000 tokens on this run, and that figure changes 
 
 ## Compatibility
 
-- Pi: `>=0.80.6 <2`, the package's `peerDependencies`. Pi 0.80.6 is the minimum for native `max` thinking. CI tests the locked Pi 1.3.0. We verified Pi 0.80.6, 0.87.1, and 1.3.0 on 2026-10-18 ([`docs/verification-gates.md`](docs/verification-gates.md#host-compatibility)). The long-session test ran on Pi 1.4.0 on 2026-11-01.
+- Pi: `>=0.80.6 <2`, the package's `peerDependencies`. Pi 0.80.6 is the minimum for native `max` thinking. CI tests the locked Pi 1.4.0. We verified Pi 0.80.6, 0.87.1, and 1.3.0 on 2026-10-18, before that lock moved ([`docs/verification-gates.md`](docs/verification-gates.md#host-compatibility)). The long-session test ran on Pi 1.4.0 on 2026-11-01.
 - Node.js: 22.19.0 or newer, the same minimum as Pi. CI runs Node.js 22.19.0 (`.nvmrc`).
 - Platforms: CI runs on Linux (Ubuntu 24.04). The credential file works wherever Claude Code writes it. Only tests with a mocked Keychain cover the macOS Keychain fallback.
 - Claude models: the models and thinking rules in the [model reference](#model-reference), checked against Anthropic's documentation on 2026-10-12. For details, see the [model compatibility matrix](docs/architecture.md#model-compatibility-matrix).

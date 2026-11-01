@@ -81,9 +81,11 @@ Manual-budget models are `claude-haiku-4-5`, `claude-sonnet-4-6`, and `claude-op
 
 ## Model catalog
 
-`src/model-catalog.ts` backs Pi's `refreshModels` hook. Pi refreshes offline after any provider registration and over the network at interactive and RPC startup and when `/model` opens, and each result replaces the live model list. On a network refresh, the provider reads every page of `GET /v1/models` and saves the raw entries to `<agentDir>/pi-claude-subscription/model-catalog.json`. The file holds API metadata only, never credentials. An offline or failed refresh rebuilds the list from that file, so API models survive restarts and offline refreshes. With no usable file, the list falls back to `MODELS`. Saving raw entries means that a later package version applies its own rules to them.
+`src/model-catalog.ts` backs Pi's `refreshModels` hook. Pi refreshes offline after any provider registration, and each result replaces the live model list. It refreshes over the network at interactive and RPC startup, and when `/model <pattern>` finds no cached match or the model and scoped-models selectors open. Print mode never refreshes over the network.
 
-Known models keep their `compat` settings and thinking-level map and take only limits, name, and image capability from the API. New models need adaptive thinking, an effort table, and `high` effort. A known model stays when the API lists it, or a dated name such as `claude-haiku-4-5-20251001`, or the wire model of an alias.
+On a network refresh, the provider reads up to 10 pages of `GET /v1/models`. If every page succeeds and at least one entry is usable, it saves the entries to `<agentDir>/pi-claude-subscription/model-catalog.json`, keeping only the fields that mapping reads. The file holds API metadata and never holds credentials. An offline or failed refresh rebuilds the list from that file, so API models survive restarts and offline refreshes. With no usable file, the list falls back to `MODELS`. The file has no age limit, so a removed model stays until the next successful network refresh.
+
+The API decides which models exist. Known models come from `MODELS` unchanged, including their limits. New models need adaptive thinking, an effort table, and `high` effort, and they get `compat.forceAdaptiveThinking`. A known model also stays when the API lists a dated name, such as `claude-haiku-4-5-20251001`, or the wire model of an alias, unless that entry is retired. The file records which built-in ids existed when it was written, so a package update can add newer built-in models to the saved list.
 
 ## Cache-retention behavior
 

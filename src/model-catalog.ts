@@ -1,4 +1,5 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 import type { RefreshModelsContext } from "@earendil-works/pi-ai";
@@ -31,21 +32,23 @@ function supported(value: unknown): boolean {
 function mapModel(raw: unknown): ClaudeModelConfig | undefined {
   if (!isRecord(raw) || typeof raw.id !== "string" || !raw.id.startsWith("claude-") ||
     typeof raw.display_name !== "string" || !raw.display_name.trim() || raw.lifecycle === "retired") return;
+  // The API decides whether a known model exists. Its tested settings and limits stay as shipped.
   const known = MODELS.find((model) => model.id === raw.id);
-  const contextWindow = positiveInteger(raw.max_input_tokens) ?? known?.contextWindow;
-  const maxTokens = positiveInteger(raw.max_tokens) ?? known?.maxTokens;
+  if (known) return known;
+  const contextWindow = positiveInteger(raw.max_input_tokens);
+  const maxTokens = positiveInteger(raw.max_tokens);
   if (!contextWindow || !maxTokens) return;
   const capabilities = isRecord(raw.capabilities) ? raw.capabilities : undefined;
-  if (!known && !capabilities) return;
-  const thinking = capabilities && isRecord(capabilities.thinking) ? capabilities.thinking : undefined;
+  if (!capabilities) return;
+  const thinking = isRecord(capabilities.thinking) ? capabilities.thinking : undefined;
   const types = thinking && isRecord(thinking.types) ? thinking.types : undefined;
   const adaptive = supported(types?.adaptive);
   // Native request handling for new models is known only for adaptive thinking.
-  if (!known && !adaptive) return;
-  const effort = capabilities && isRecord(capabilities.effort) ? capabilities.effort : undefined;
-  if (!known && !effort) return;
+  if (!adaptive) return;
+  const effort = isRecord(capabilities.effort) ? capabilities.effort : undefined;
+  if (!effort) return;
   const supportedEffort = (level: string) => supported(effort?.[level]);
-  const adaptiveMap = adaptive ? {
+  const thinkingLevelMap = {
     ...(!supported(types?.disabled) ? { off: null } : {}),
     minimal: supportedEffort("low") ? "low" : null,
     low: supportedEffort("low") ? "low" : null,
@@ -53,38 +56,33 @@ function mapModel(raw: unknown): ClaudeModelConfig | undefined {
     high: supportedEffort("high") ? "high" : null,
     xhigh: supportedEffort("xhigh") ? "xhigh" : null,
     max: supportedEffort("max") ? "max" : null,
-  } as const : undefined;
-  if (!known && adaptiveMap?.high !== "high") return;
-  const reasoning = known?.reasoning ?? true;
-  const thinkingLevelMap = known?.thinkingLevelMap ?? adaptiveMap;
+  } as const;
+  if (thinkingLevelMap.high !== "high") return;
   return {
     id: raw.id,
     api: CLAUDE_SUBSCRIPTION_NATIVE_API_ID,
     name: `${raw.display_name} (Claude Code subscription)`,
-    reasoning,
-    ...(thinkingLevelMap ? { thinkingLevelMap } : {}),
-    // Known models keep their tested request settings, whatever else the API offers.
-    ...(known ? (known.compat ? { compat: known.compat } : {}) : { compat: { forceAdaptiveThinking: true } }),
-    input: capabilities && capabilities.image_input !== undefined
-      ? (supported(capabilities.image_input) ? ["text", "image"] : ["text"])
-      : known ? [...known.input] : ["text"],
+    reasoning: true,
+    thinkingLevelMap,
+    compat: { forceAdaptiveThinking: true },
+    input: supported(capabilities.image_input) ? ["text", "image"] : ["text"],
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     contextWindow,
     maxTokens: Math.min(maxTokens, contextWindow),
   };
 }
 
-function buildCatalog(entries: readonly unknown[]): ClaudeModelConfig[] {
+function buildCatalog(entries: readonly unknown[]): ClaudeModelConfig[] | undefined {
   const models: ClaudeModelConfig[] = [];
   const ids = new Set<string>();
   for (const entry of entries) {
     const mapped = mapModel(entry);
     if (mapped && !ids.has(mapped.id)) { models.push(mapped); ids.add(mapped.id); }
   }
-  if (models.length === 0) return [...MODELS];
+  if (models.length === 0) return undefined;
   // Keep local names for models the API lists under another id: selection aliases
   // and undated names such as claude-haiku-4-5 for claude-haiku-4-5-20251001.
-  const advertisedIds = entries.flatMap((entry) => (isRecord(entry) && typeof entry.id === "string" ? [entry.id] : []));
+  const advertisedIds = entries.flatMap((entry) => (isRecord(entry) && typeof entry.id === "string" && entry.lifecycle !== "retired" ? [entry.id] : []));
   for (const local of MODELS) {
     if (ids.has(local.id)) continue;
     const nativeId = (local.compat as AnthropicCompat | undefined)?.nativeModelId;
@@ -119,23 +117,35 @@ async function fetchCatalogEntries(fetchImpl: FetchLike, loadToken: LoadToken, p
   return undefined;
 }
 
-async function readSavedEntries(path: string): Promise<unknown[] | undefined> {
+type SavedCatalog = { entries: unknown[]; builtInIds: unknown[] };
+
+async function readSavedCatalog(path: string): Promise<SavedCatalog | undefined> {
   try {
     const saved: unknown = JSON.parse(await readFile(path, "utf8"));
-    return isRecord(saved) && Array.isArray(saved.data) ? saved.data : undefined;
+    if (!isRecord(saved) || !Array.isArray(saved.data)) return undefined;
+    return { entries: saved.data, builtInIds: Array.isArray(saved.builtInIds) ? saved.builtInIds : [] };
   } catch {
     return undefined;
   }
 }
 
+// Only the fields that mapping reads reach the disk.
+function savedEntry(entry: unknown): unknown {
+  if (!isRecord(entry)) return entry;
+  const { id, display_name, lifecycle, max_input_tokens, max_tokens, capabilities } = entry;
+  return { id, display_name, lifecycle, max_input_tokens, max_tokens, capabilities };
+}
+
 async function saveEntries(path: string, entries: readonly unknown[]): Promise<void> {
+  const temporaryPath = `${path}.${randomUUID()}.tmp`;
   try {
-    await mkdir(dirname(path), { recursive: true });
-    const temporaryPath = `${path}.${process.pid}.tmp`;
-    await writeFile(temporaryPath, `${JSON.stringify({ fetchedAt: new Date().toISOString(), data: entries }, null, 2)}\n`, { mode: 0o600 });
+    await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+    const saved = { fetchedAt: new Date().toISOString(), builtInIds: MODELS.map((model) => model.id), data: entries.map(savedEntry) };
+    await writeFile(temporaryPath, `${JSON.stringify(saved, null, 2)}\n`, { mode: 0o600 });
     await rename(temporaryPath, path);
   } catch {
-    // The saved list only speeds up later runs, so a failed write must not fail the refresh.
+    // The saved list only keeps later runs current, so a failed write must not fail the refresh.
+    await rm(temporaryPath, { force: true }).catch(() => {});
   }
 }
 
@@ -151,15 +161,20 @@ export function createClaudeModelCatalog(
   catalogPath?: string,
 ) {
   const lastGoodList = async (): Promise<ClaudeModelConfig[]> => {
-    const saved = await readSavedEntries(catalogPath ?? getDefaultModelCatalogPath());
-    return saved ? buildCatalog(saved) : [...MODELS];
+    const saved = await readSavedCatalog(catalogPath ?? getDefaultModelCatalogPath());
+    if (!saved) return [...MODELS];
+    // Built-in models from a newer package version than the saved list must still appear.
+    const added = MODELS.filter((model) => !saved.builtInIds.includes(model.id));
+    const list = buildCatalog(saved.entries);
+    return list === undefined ? [...MODELS] : [...list, ...added.filter((model) => !list.some((entry) => entry.id === model.id))];
   };
   return async (context: RefreshModelsContext): Promise<ClaudeModelConfig[]> => {
     if (!context.allowNetwork || context.signal.aborted) return lastGoodList();
     const entries = await fetchCatalogEntries(fetchImpl, loadToken, context.signal);
-    if (!entries?.some((entry) => mapModel(entry) !== undefined)) return lastGoodList();
+    const list = entries && buildCatalog(entries);
+    if (!entries || !list) return lastGoodList();
     await saveEntries(catalogPath ?? getDefaultModelCatalogPath(), entries);
-    return buildCatalog(entries);
+    return list;
   };
 }
 

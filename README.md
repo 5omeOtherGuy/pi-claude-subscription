@@ -115,13 +115,14 @@ To cycle the thinking level, press `Shift+Tab`. To set it at startup, pass `--th
 
 Pi's built-in `anthropic` models may also be listed. They are separate from these models, and this package refuses new prompts on them while it is loaded.
 
-The model list refreshes itself. Pi calls Anthropic's `GET /v1/models` with the active Claude Code OAuth credential when an interactive or RPC session starts and when you open `/model`. A refresh runs no model. The provider saves the result to `pi-claude-subscription/model-catalog.json` in Pi's agent directory, so print mode, offline runs, and later sessions use the latest list. If a refresh fails, the provider keeps the saved list. With no saved list, it uses the models in the [model reference](#model-reference).
+The model list refreshes itself. Pi calls Anthropic's `GET /v1/models` with the active Claude Code OAuth credential when an interactive or RPC session starts, and when `/model` or the scoped-models selector needs the list. A refresh runs no model. The provider saves the result to `pi-claude-subscription/model-catalog.json` in Pi's agent directory. Offline runs, print mode, and later sessions then use the list from the last successful refresh. Print mode never refreshes by itself. If a refresh fails, the provider keeps the saved list. With no saved list, it uses the models in the [model reference](#model-reference).
 
 A refresh follows these rules:
 
 - The provider adds a new model only when the API supplies usable context, output, and capability data, and only if the model uses adaptive thinking.
-- Known models keep their tested thinking settings. Their context and output limits come from the API, so they can differ from the model reference. The API reports 1,000,000 and 128,000 for `claude-sonnet-4-6`.
+- Known models keep their built-in settings and limits. The API decides only whether they stay on the list.
 - A known model leaves the list if the API no longer lists it, under its own name or a dated name.
+- A package update adds its new built-in models to the saved list.
 
 The API list may not match the models enabled for your subscription, so a listed model can still fail when you call it.
 
@@ -139,7 +140,7 @@ For each command's output, see [`docs/slash-commands.md`](docs/slash-commands.md
 
 ### Model reference
 
-The tables show the built-in defaults, before any refresh. Pi has the thinking levels `off`, `minimal`, `low`, `medium`, `high`, and `xhigh`. Since Pi 0.80.6, it also has opt-in `max`. This provider enables native `max` for every adaptive model. Manual-budget models stop at `xhigh`.
+Pi has the thinking levels `off`, `minimal`, `low`, `medium`, `high`, and `xhigh`. Since Pi 0.80.6, it also has opt-in `max`. This provider enables native `max` for every adaptive model. Manual-budget models stop at `xhigh`.
 
 | Model | Context | Output cap | Pi thinking levels | Request thinking |
 |---|---:|---:|---|---|

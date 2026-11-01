@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import test from "node:test";
 import type { RefreshModelsContext } from "@earendil-works/pi-ai";
 
@@ -71,7 +71,7 @@ test("Claude catalog falls back offline, on failed pages and malformed payloads"
   }
 });
 
-test("Claude catalog keeps manual-budget models on budget thinking when the API also offers adaptive", async () => {
+test("Claude catalog leaves known models as shipped, whatever settings and limits the API reports", async () => {
   const thinking = { types: { adaptive: { supported: true }, enabled: { supported: true }, disabled: { supported: true } } };
   const refresh = createClaudeModelCatalog(listing(
     { id: "claude-opus-4-6", display_name: "Claude Opus 4.6", max_input_tokens: 1_000_000, max_tokens: 128_000, capabilities: { thinking } },
@@ -79,7 +79,7 @@ test("Claude catalog keeps manual-budget models on budget thinking when the API 
   ), async () => FAKE_TOKEN, freshCachePath());
   const models = await refresh(context());
   assert.deepEqual(models.map((model) => model.id), ["claude-opus-4-6", "claude-sonnet-4-6"]);
-  for (const model of models) assert.equal(model.compat, undefined, `${model.id} must keep its tested request settings`);
+  for (const model of models) assert.deepEqual(model, MODELS.find((known) => known.id === model.id), `${model.id} must stay as shipped`);
 });
 
 test("Claude catalog keeps a known model that the API lists only under a dated name", async () => {
@@ -121,4 +121,63 @@ test("Claude catalog ignores a damaged saved list and does not save an unusable 
     writeFileSync(cachePath, damaged);
     assert.deepEqual(await createClaudeModelCatalog(listing(), async () => FAKE_TOKEN, cachePath)(context(false)), [...MODELS]);
   }
+});
+
+test("Claude catalog maps the live API listing to every built-in model", async () => {
+  const adaptive = (id: string) => ({ id, display_name: id, max_input_tokens: 1_000_000, max_tokens: 128_000,
+    capabilities: { thinking: { types: { adaptive: { supported: true } } } } });
+  const budget = (id: string) => ({ id, display_name: id, max_input_tokens: 200_000, max_tokens: 64_000,
+    capabilities: { thinking: { types: { enabled: { supported: true } } } } });
+  const refresh = createClaudeModelCatalog(listing(
+    ...["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-1", "claude-opus-5", "claude-sonnet-5", "claude-fable-5",
+      "claude-opus-4-8", "claude-opus-4-7", "claude-sonnet-4-6", "claude-opus-4-6"].map(adaptive),
+    ...["claude-opus-4-5-20251101", "claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"].map(budget),
+  ), async () => FAKE_TOKEN, freshCachePath());
+  const ids = (await refresh(context())).map((model) => model.id).sort();
+  assert.deepEqual(ids, MODELS.map((model) => model.id).sort());
+});
+
+test("Claude catalog shows built-in models that are newer than the saved list", async () => {
+  const cachePath = freshCachePath();
+  await createClaudeModelCatalog(listing(newModelEntry), async () => FAKE_TOKEN, cachePath)(context());
+  const saved = JSON.parse(readFileSync(cachePath, "utf8"));
+  const added = MODELS[0]!.id;
+  writeFileSync(cachePath, JSON.stringify({ ...saved, builtInIds: saved.builtInIds.filter((id: string) => id !== added) }));
+  const ids = (await createClaudeModelCatalog(listing(), async () => FAKE_TOKEN, cachePath)(context(false))).map((model) => model.id);
+  assert.deepEqual(ids, ["claude-new-1", added]);
+});
+
+test("Claude catalog drops a local name when its dated entry is retired", async () => {
+  const refresh = createClaudeModelCatalog(listing(
+    { id: "claude-opus-5-5", display_name: "Claude Opus 5.5" },
+    { id: "claude-haiku-4-5-20251001", display_name: "Claude Haiku 4.5", lifecycle: "retired" },
+  ), async () => FAKE_TOKEN, freshCachePath());
+  assert.deepEqual((await refresh(context())).map((model) => model.id), ["claude-opus-5-5"]);
+});
+
+test("Claude catalog saves nothing from a partial listing and only the fields it reads", async () => {
+  const cachePath = freshCachePath();
+  let calls = 0;
+  await createClaudeModelCatalog(async () => (++calls === 1
+    ? Response.json({ data: [newModelEntry], has_more: true, last_id: "next" })
+    : new Response("down", { status: 500 })), async () => FAKE_TOKEN, cachePath)(context());
+  assert.equal(existsSync(cachePath), false);
+  await createClaudeModelCatalog(listing({ ...newModelEntry, unexpected: "field" }), async () => FAKE_TOKEN, cachePath)(context());
+  const saved = readFileSync(cachePath, "utf8");
+  assert.ok(!saved.includes("unexpected"));
+  assert.equal(statSync(cachePath).mode & 0o777, 0o600);
+  assert.deepEqual(readdirSync(dirname(cachePath)), ["model-catalog.json"]);
+});
+
+test("Claude catalog ignores everything except model metadata in a saved list", async () => {
+  const cachePath = freshCachePath();
+  await createClaudeModelCatalog(listing(newModelEntry), async () => FAKE_TOKEN, cachePath)(context());
+  const saved = JSON.parse(readFileSync(cachePath, "utf8"));
+  saved.data[0] = { ...saved.data[0], baseUrl: "https://attacker.example", headers: { authorization: "x" }, api: "other", compat: { nativeModelId: "x" } };
+  writeFileSync(cachePath, JSON.stringify(saved));
+  const [model] = await createClaudeModelCatalog(listing(), async () => FAKE_TOKEN, cachePath)(context(false));
+  assert.equal("baseUrl" in model!, false);
+  assert.equal("headers" in model!, false);
+  assert.deepEqual(model?.compat, { forceAdaptiveThinking: true });
+  assert.notEqual(model?.api, "other");
 });

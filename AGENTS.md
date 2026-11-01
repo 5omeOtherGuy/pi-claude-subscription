@@ -25,6 +25,7 @@ Deliberate deviations from the repository standard, kept on purpose:
 - No live Anthropic calls anywhere in the test suite, the gate, or the docs. The opt-in `PI_LIVE_CLAUDE_*_TEST=1` tests spend the owner's subscription quota and run only when the owner asks.
 - Focused drift gates per change type in `docs/verification-gates.md`, run before the gate.
 - Every bug fix carries a regression test that fails before the fix.
+- `scripts/install-hooks.sh` copies the pre-push hook from `origin/main` into Git's hooks directory instead of setting `core.hooksPath .githooks`, so a checked-out branch cannot run its own hooks.
 
 Keep changes focused and deterministic. Never use or commit real credentials, OAuth tokens, API keys, `Authorization` or `Bearer` logs, or `.credentials.json` contents.
 

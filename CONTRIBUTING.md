@@ -32,7 +32,15 @@ You need npm and Node.js 22.19 or newer. `.nvmrc` pins the CI default, and that 
    npm ci
    ```
 
-3. Run the checks you need.
+3. Install the pre-push hook.
+
+   ```bash
+   sh scripts/install-hooks.sh
+   ```
+
+   The hook runs the gate before every push and refuses direct pushes to `main`. Changes land through pull requests. The script copies the hook from `origin/main` into Git's hooks directory, so checking out a branch runs none of that branch's code. Installing, testing, or pushing from a branch does run its code, so do none of these on an untrusted branch outside a sandbox. Run the script again after the hook changes on `main`.
+
+4. Run the checks you need.
 
    ```bash
    npm test

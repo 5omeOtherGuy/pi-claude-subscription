@@ -109,6 +109,7 @@ The table omits the `.test.ts` suffix.
 | Request building | `native-request`, `native-request-golden`, `native-cache-prefix`, `native-convert-messages-memo`, `native-surrogates`, `native-tool-sequencing`, `native-transcript-context`, `system-shape` | System blocks, cache anchors and prefix stability, memoized conversion, emoji and surrogates, tool sequencing, and both context shapes. Golden bodies are in `tests/golden/`, and `PI_GOLDEN_UPDATE=1` regenerates them. |
 | Streaming | `anthropic-sse`, `native-stream-simple`, `edit-tool-arguments`, `tool-json-arguments` | SSE parsing, contract violations, mocked `streamSimple` integration, retries, aborts, redacted errors, and tool argument repair. |
 | Redaction and secrets | `redaction`, `secret-scan` | Redaction patterns and the tracked-file secret scan. |
+| Repository hooks | `pre-push-hook` | The pre-push hook in a linked worktree: the gate runs without Git's hook variables, and pushes to `main` are refused. |
 | Package and dependencies | `dependency-drift`, `extension-changelog`, `package-manifest` | Dependency lockstep, the Node floor, the documented gate categories, changelog display, and manifest and `npm pack` contents. |
 
 The live tests below are opt-in. They spend subscription quota and stay skipped unless their variable is `1`. Run them only when the owner asks.

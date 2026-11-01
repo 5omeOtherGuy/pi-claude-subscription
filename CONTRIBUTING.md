@@ -32,13 +32,13 @@ You need npm and Node.js 22.19 or newer. `.nvmrc` pins the CI default, and that 
    npm ci
    ```
 
-3. Enable the repository hooks.
+3. Install the pre-push hook.
 
    ```bash
-   git config core.hooksPath .githooks
+   sh scripts/install-hooks.sh
    ```
 
-   The `.githooks/pre-push` hook runs the gate before every push and refuses direct pushes to `main`. Changes land through pull requests.
+   The hook runs the gate before every push and refuses direct pushes to `main`. Changes land through pull requests. The script copies the hook from `origin/main` into Git's hooks directory, so a checked-out branch cannot add or change hooks. Run the script again after the hook changes on `main`.
 
 4. Run the checks you need.
 

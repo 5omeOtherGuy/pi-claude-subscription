@@ -1,8 +1,6 @@
 #!/bin/sh
 # Refuses direct pushes to main (changes land through a squash-merged PR) and
-# runs the gate before any other push. Enable once per repository with:
-#   git config core.hooksPath .githooks
-# All linked worktrees share that setting.
+# runs the gate before any other push. Install it with scripts/install-hooks.sh.
 # Only the owner may bypass it (git push --no-verify), for emergencies.
 set -eu
 

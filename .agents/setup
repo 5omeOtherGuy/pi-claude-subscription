@@ -14,8 +14,7 @@ node -e '
 echo "setup: npm ci"
 time npm ci --no-audit --no-fund
 
-git config core.hooksPath .githooks
-echo "setup: git hooks enabled from .githooks"
+sh scripts/install-hooks.sh
 
 present() { if [ -n "${!1:-}" ]; then echo "present"; else echo "absent"; fi; }
 echo "setup: GH_TOKEN $(present GH_TOKEN), GITHUB_TOKEN $(present GITHUB_TOKEN)"

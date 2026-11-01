@@ -249,13 +249,13 @@ node --test --import tsx tests/model-matrix.test.ts
 
 These files explain the repository:
 
-- [`INDEX.md`](INDEX.md) is the repository entry point.
-- [`REPO_MAP.md`](REPO_MAP.md) maps the source and the request flow.
+- [`REPO_MAP.md`](REPO_MAP.md) maps the source, the tests, and the request flow.
 - [`docs/architecture.md`](docs/architecture.md) covers the request shape, credentials, cache behavior, stream guards, and replay rules.
 - [`docs/slash-commands.md`](docs/slash-commands.md) is the command output reference.
-- [`docs/model-selection.md`](docs/model-selection.md) covers model choices.
-- [`docs/why-system-blocks.md`](docs/why-system-blocks.md) covers system-block choices.
+- [`docs/model-selection.md`](docs/model-selection.md) helps you choose a model.
 - [`docs/verification-gates.md`](docs/verification-gates.md) documents the test gates and the dependency-drift policy.
+- [`docs/rationale.md`](docs/rationale.md) explains why this package exists.
+- [`docs/prompt-cache-live-verification.md`](docs/prompt-cache-live-verification.md) holds the live test steps and results.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) covers contributions.
 - [`SECURITY.md`](SECURITY.md) covers security.
 

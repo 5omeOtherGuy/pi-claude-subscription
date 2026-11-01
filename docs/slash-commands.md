@@ -8,7 +8,7 @@ The extension registers three local slash commands. They make no network request
 | `/claude-subscription-accounts` | Discovers the Claude Code credential file and saves it as the active account. |
 | `/claude-subscription-import` | Copies the discovered credential file into package-owned state and saves that copy as the active account. |
 
-If Pi reports one of these commands as unknown, the extension did not load. `pi list` shows the installed packages.
+If Pi reports one of these commands as unknown, the extension did not load. Run `pi list` to see the installed packages, then run `pi install` again if this package is missing.
 
 ## Credential discovery
 

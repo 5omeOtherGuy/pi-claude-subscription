@@ -12,10 +12,6 @@ This reference describes how the `claude-subscription` provider works: its publi
 
 Built-in model ids are `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-opus-4-7`, `claude-opus-4-7-300k`, `claude-opus-4-8`, `claude-opus-5`, `claude-opus-5-5`, `claude-fable-5`, `claude-fable-5-1`, `claude-sonnet-5`, `claude-sonnet-5-5`, and `claude-haiku-5-5`.
 
-## Implementation
-
-The provider is a native Pi `streamSimple` implementation. It builds Anthropic Messages requests itself and loads Claude Code OAuth credentials at request time. It needs no local proxy, Python virtual environment, or background service.
-
 ## Request shape
 
 Every request is a `POST` to `https://api.anthropic.com/v1/messages` with `stream: true`.
@@ -164,7 +160,8 @@ With no budget, Pi's `temperature` option is passed through. Manual-budget model
 - The extension calls `pi.unregisterProvider("anthropic")`, but built-in `anthropic` models may remain visible. Visibility is not a safety boundary.
 - Subscription models use the isolated `claude-subscription-native` API id. They do not replace Pi's shared `anthropic-messages` handler.
 - The native stream refuses any provider other than `claude-subscription` before it loads credentials.
-- The `input` and `before_provider_request` hooks block `anthropic`, `custom-anthropic`, and `meridian`. The `input` hook skips steer and follow-up messages, because their turn already passed it.
+- The `input` hook refuses new prompts on `anthropic`, `custom-anthropic`, and `meridian`. It skips steer and follow-up messages, because their turn already passed it.
+- The `before_provider_request` hook throws for those providers, but Pi catches the error and still sends the request, so the hook only reports the problem.
 - The transport refuses any URL other than `https://api.anthropic.com/v1/messages`, so the OAuth token goes nowhere else on that path.
 
 A stale extension context does not fail closed. The `input` handler tries to refuse the prompt, but `ctx.ui` also throws on a stale context, so Pi catches the error and the prompt continues. For Claude-shaped payloads, the `before_provider_request` hook throws too, and Pi still sends the request.
@@ -189,7 +186,7 @@ Two commands select other sources. Both write under `<agentDir>/pi-claude-subscr
 | `/claude-subscription-accounts` | Stores the selected source descriptor in `credential-state.json`. |
 | `/claude-subscription-import` | Copies the selected credentials to `imported-credentials.json`, makes that copy the active source, and records its origin in `credential-state.json`. |
 
-Account discovery covers the credential file and, on macOS, Keychain services named `Claude Code-credentials` or `Claude Code-credentials-*`.
+Account discovery reads only the credential file, because the extension passes no Keychain runner to `discoverKeychainAccounts`.
 
 ## Model catalog
 
@@ -266,7 +263,7 @@ Arguments of all other tools pass through unchanged.
 
 | Phase | Limit | Default |
 |---|---|---|
-| Waiting for response headers | `streamNoProgressTimeoutMs`, then `timeoutMs` | 120 seconds |
+| Waiting for response headers | `streamNoProgressTimeoutMs`, then `timeoutMs` | 300 seconds under Pi, which always sets `timeoutMs`, and 120 seconds with no `timeoutMs` |
 | Gap between body reads | `streamNoProgressTimeoutMs` | 45 seconds |
 
 Pi's `timeoutMs` does not limit a stream after its headers arrive, so a long stream that keeps making progress continues.
@@ -334,23 +331,7 @@ The provider does not use this retry for malformed signatures, modified thinking
 
 `npm test` and `npm run check` make no live Anthropic requests and read no real credential files. The tests use fake credentials, Keychain services, and tokens, plus static fixtures and mocked network boundaries.
 
-The tests in [`tests/`](../tests) cover:
-
-- credential and configuration failures
-- multi-account discovery, selection, and import
-- status diagnostics
-- refresh, coalescing, and stale-write avoidance
-- Keychain boundaries
-- OAuth-only headers
-- request and system shaping
-- cache retention
-- message conversion
-- auth retry
-- stream abort, error, and timeout handling
-- SSE parsing
-- provider guardrails
-- package contents
-- redaction
+[`REPO_MAP.md`](../REPO_MAP.md) lists the tests by area.
 
 The `tests/live-*.test.ts` files are the exception. They skip unless a `PI_LIVE_CLAUDE_*_TEST=1` variable is set, and they spend subscription quota when it is.
 

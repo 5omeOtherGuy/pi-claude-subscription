@@ -14,9 +14,7 @@ import {
 import { contextToPayload, nativeCompat } from "../src/native-payload.ts";
 import { buildNativeMessagesRequest } from "../src/native-request.ts";
 
-// Full-body golden payload snapshots for every registered model
-// Section-level cache
-// diagnostics catch churn within one section; these snapshots catch any
+// Full-body golden payload snapshots for every registered model. They catch any
 // cross-cutting byte change to the outgoing Anthropic Messages body. Byte
 // stability is a prompt-cache invariant: an unintended body change re-bills
 // the entire cached prefix as cache writes on every following turn.

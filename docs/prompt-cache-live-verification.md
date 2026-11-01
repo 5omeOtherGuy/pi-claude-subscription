@@ -89,7 +89,7 @@ These figures come from one account on one day. Anthropic decides how each reque
 
 | Phase | Turns | Cache hit ratio | What it shows |
 |---|---:|---:|---|
-| Read-only repository review | 60 | 96.5% | Context grew to about 229,600 tokens. Every turn after the first read at least 90% of the previous context. |
+| Read-only repository review | 60 | 96.6% | Context grew to about 229,600 tokens. Every turn after the first read at least 90% of the previous context. |
 | New process, same session | 3 | 99.5% | Restarting Pi keeps the cache. |
 | After 5.5 idle minutes, 5-minute cache | 2 | 50.7% | The session's cache had expired. The first turn read 3,640 tokens and wrote 229,958. |
 | After 5.5 idle minutes, 1-hour cache | 1 | 99.4% | A small separate session read 4,299 tokens and wrote 20 after the same gap. |

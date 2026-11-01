@@ -8,7 +8,7 @@ Three models use a fixed token budget: `claude-haiku-4-5`, `claude-sonnet-4-6`, 
 
 The other ten models use adaptive thinking. The provider sends `thinking: { type: "adaptive", display: "summarized" }` and maps the Pi level to a Claude effort. Effort guides the model and sets no token budget. Claude has no `minimal` effort, so Pi `minimal` sends `low`. All ten models offer `max`.
 
-The provider sends `temperature` only on the three budget models at Pi `off`. It drops `temperature` on every adaptive model and never sends `top_p` or `top_k`.
+The provider sends `temperature` only on the three budget models, and only when a request has no thinking. It drops `temperature` on every adaptive model and never sends `top_p` or `top_k`.
 
 ## Check what `off` does on your model
 

@@ -1,7 +1,8 @@
 #!/bin/sh
 # Refuses direct pushes to main (changes land through a squash-merged PR) and
-# runs the gate before any other push. Enable once per checkout with:
+# runs the gate before any other push. Enable once per repository with:
 #   git config core.hooksPath .githooks
+# All linked worktrees share that setting.
 # Only the owner may bypass it (git push --no-verify), for emergencies.
 set -eu
 
@@ -12,5 +13,10 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     exit 1
   fi
 done
+
+# In a linked worktree, Git exports GIT_DIR and related variables to this hook.
+# Tests that create temporary repositories must not inherit them, because their
+# git commands would then change this repository.
+unset $(git rev-parse --local-env-vars)
 
 npm run -s check

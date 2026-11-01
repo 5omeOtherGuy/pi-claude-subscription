@@ -8,13 +8,17 @@ import { fileURLToPath } from "node:url";
 
 const script = fileURLToPath(new URL("../scripts/secret-scan.mjs", import.meta.url));
 
+// A Git hook exports GIT_DIR and GIT_INDEX_FILE. Without this filter, these commands
+// would change the repository that runs the tests instead of the temporary one.
+const environment = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+
 function scan(files: Record<string, string>) {
   const dir = mkdtempSync(join(tmpdir(), "secret-scan-"));
   try {
-    spawnSync("git", ["init", "-q"], { cwd: dir });
+    spawnSync("git", ["init", "-q"], { cwd: dir, env: environment });
     for (const [name, text] of Object.entries(files)) writeFileSync(join(dir, name), text);
-    spawnSync("git", ["add", "."], { cwd: dir });
-    return spawnSync(process.execPath, [script], { cwd: dir, encoding: "utf8" });
+    spawnSync("git", ["add", "."], { cwd: dir, env: environment });
+    return spawnSync(process.execPath, [script], { cwd: dir, encoding: "utf8", env: environment });
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

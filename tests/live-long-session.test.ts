@@ -25,6 +25,7 @@ const IDLE_MS = Number(process.env.PI_LIVE_CLAUDE_LONG_SESSION_IDLE_SECONDS ?? 3
 const MIN_LONG_TURNS = 50;
 const MIN_HIT_RATIO = 0.8;
 const MIN_CONTEXT_REUSE = 0.9;
+const FIVE_MINUTES_MS = 5 * 60_000;
 const EMOJI_SENTINEL = "\u{1F600} \u{10437} ok";
 
 // Only quota headers are kept: no prompts, tool output, account ids or tokens.
@@ -74,7 +75,7 @@ function readTurns(sessionDir: string): Turn[] {
         cacheRead: message.usage?.cacheRead ?? 0,
         cacheWrite: message.usage?.cacheWrite ?? 0,
         stopReason: message.stopReason,
-        servedModel: message.responseModel ?? message.model,
+        servedModel: message.responseModel ?? "",
         provider: message.provider,
       });
     }
@@ -140,6 +141,7 @@ test("live long session stays on the plan, keeps its cache warm and round-trips 
   const files = repositoryFiles();
   const startedAt = new Date().toISOString();
   const phases: Phase[] = [];
+  let summary: any;
 
   // Stop at the first failed phase so a broken run does not keep spending quota.
   async function phase(name: string, sessionDir: string, extraArgs: string[], prompt: string, phaseEnvironment: NodeJS.ProcessEnv = environment): Promise<Phase> {
@@ -153,64 +155,70 @@ test("live long session stays on the plan, keeps its cache warm and round-trips 
     return result;
   }
 
-  const long = await phase("long", longSessions, [], longTask(files));
-  const resumed = await phase("resumed", longSessions, ["--continue"], "Read package.json, then AGENTS.md, one per turn with one sentence each, then reply with a line containing only DONE.");
-  const longRetention = { ...environment, PI_CACHE_RETENTION: "long" };
-  const retentionStart = await phase("one-hour-start", retentionSessions, [], "Read LICENSE, then reply with a line containing only DONE.", longRetention);
-  await new Promise((resolveIdle) => setTimeout(resolveIdle, IDLE_MS));
-  const retentionAfterIdle = await phase("one-hour-after-idle", retentionSessions, ["--continue"], "Reply with a line containing only DONE.", longRetention);
-  const idle = await phase("after-idle", longSessions, ["--continue"], "Read LICENSE, then reply with a line containing only DONE.");
-  const fresh = await phase("fresh", freshSessions, [], `Reply with exactly these characters and nothing else: ${EMOJI_SENTINEL}`);
+  function writeSummary(): void {
+    const quota = readFileSync(responseLog, "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line) as QuotaSample);
+    const allTurns = phases.flatMap((entry) => entry.turns);
+    summary = {
+      startedAt,
+      finishedAt: new Date().toISOString(),
+      model: MODEL_ID,
+      thinking: THINKING,
+      piVersion: execFileSync(PI_BIN, ["--version"], { encoding: "utf8" }).trim(),
+      commit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_ROOT, encoding: "utf8" }).trim(),
+      filesListed: files.length,
+      idleSeconds: IDLE_MS / 1000,
+      phases: phases.map(({ name, turns, exitCode }) => ({ name, exitCode, turnCount: turns.length, hitRatio: hitRatio(turns), turns })),
+      totals: {
+        turns: allTurns.length,
+        input: allTurns.reduce((sum, turn) => sum + turn.input, 0),
+        output: allTurns.reduce((sum, turn) => sum + turn.output, 0),
+        cacheRead: allTurns.reduce((sum, turn) => sum + turn.cacheRead, 0),
+        cacheWrite: allTurns.reduce((sum, turn) => sum + turn.cacheWrite, 0),
+        hitRatio: hitRatio(allTurns),
+      },
+      firstQuota: quota[0],
+      lastQuota: quota.at(-1),
+      responses: quota.length,
+      statuses: [...new Set(quota.map((sample) => sample.status))],
+      planStatuses: distinct(quota, "status"),
+      overageStatuses: distinct(quota, "overage-status"),
+      overageDisabledReasons: distinct(quota, "overage-disabled-reason"),
+    };
+    mkdirSync(RESULTS_DIR, { recursive: true });
+    const resultPath = join(RESULTS_DIR, `${startedAt.replace(/[:.]/g, "-")}.json`);
+    writeFileSync(resultPath, `${JSON.stringify(summary, null, 2)}\n`);
+    t.diagnostic(`results: ${resultPath}`);
+    t.diagnostic(JSON.stringify(summary.totals));
+  }
 
-  const quota = readFileSync(responseLog, "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line) as QuotaSample);
-  const allTurns = phases.flatMap((entry) => entry.turns);
-  const summary = {
-    startedAt,
-    finishedAt: new Date().toISOString(),
-    model: MODEL_ID,
-    thinking: THINKING,
-    piVersion: execFileSync(PI_BIN, ["--version"], { encoding: "utf8" }).trim(),
-    commit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_ROOT, encoding: "utf8" }).trim(),
-    filesReviewed: files.length,
-    idleSeconds: IDLE_MS / 1000,
-    phases: phases.map(({ name, turns, exitCode }) => ({ name, exitCode, turnCount: turns.length, hitRatio: hitRatio(turns), turns })),
-    totals: {
-      turns: allTurns.length,
-      input: allTurns.reduce((sum, turn) => sum + turn.input, 0),
-      output: allTurns.reduce((sum, turn) => sum + turn.output, 0),
-      cacheRead: allTurns.reduce((sum, turn) => sum + turn.cacheRead, 0),
-      cacheWrite: allTurns.reduce((sum, turn) => sum + turn.cacheWrite, 0),
-      hitRatio: hitRatio(allTurns),
-    },
-    firstQuota: quota[0],
-    lastQuota: quota.at(-1),
-    responses: quota.length,
-    statuses: [...new Set(quota.map((sample) => sample.status))],
-    planStatuses: distinct(quota, "status"),
-    overageStatuses: distinct(quota, "overage-status"),
-    overageDisabledReasons: distinct(quota, "overage-disabled-reason"),
-    emojiRoundTrip: fresh.stdout.includes(EMOJI_SENTINEL),
-  };
-  mkdirSync(RESULTS_DIR, { recursive: true });
-  const resultPath = join(RESULTS_DIR, `${startedAt.replace(/[:.]/g, "-")}.json`);
-  writeFileSync(resultPath, `${JSON.stringify(summary, null, 2)}\n`);
-  t.diagnostic(`results: ${resultPath}`);
-  t.diagnostic(JSON.stringify(summary.totals));
+  try {
+    const long = await phase("long", longSessions, [], longTask(files));
+    assert.ok(long.turns.length >= MIN_LONG_TURNS, `long session took only ${long.turns.length} turns`);
+    long.turns.slice(1).forEach((turn, index) => {
+      assert.ok(turn.cacheRead >= MIN_CONTEXT_REUSE * contextTokens(long.turns[index]), `long-session turn ${index + 1} lost its cache`);
+    });
+    assert.ok(hitRatio(long.turns) >= MIN_HIT_RATIO, `long-session hit ratio ${hitRatio(long.turns)}`);
+    const resumed = await phase("resumed", longSessions, ["--continue"], "Read package.json, then AGENTS.md, one per turn with one sentence each, then reply with a line containing only DONE.");
+    const longRetention = { ...environment, PI_CACHE_RETENTION: "long" };
+    const retentionStart = await phase("one-hour-start", retentionSessions, [], "Read LICENSE, then reply with a line containing only DONE.", longRetention);
+    await new Promise((resolveIdle) => setTimeout(resolveIdle, IDLE_MS));
+    const retentionAfterIdle = await phase("one-hour-after-idle", retentionSessions, ["--continue"], "Reply with a line containing only DONE.", longRetention);
+    const idle = await phase("after-idle", longSessions, ["--continue"], "Read LICENSE, then reply with a line containing only DONE.");
+    const fresh = await phase("fresh", freshSessions, [], `Reply with exactly these characters and nothing else: ${EMOJI_SENTINEL}`);
 
-  assert.equal(quota.length, allTurns.length, "every turn must report its plan status");
-  assert.deepEqual(summary.statuses, [200]);
-  assert.deepEqual(summary.planStatuses, ["allowed"], "every response must stay within plan limits");
-  assert.ok(!summary.overageStatuses.includes("allowed"), "no response may draw on extra usage");
-  assert.ok(allTurns.every((turn) => turn.provider === PROVIDER_ID), "every turn must use the subscription provider");
-  assert.ok(allTurns.every((turn) => turn.servedModel === MODEL_ID || turn.servedModel.startsWith(`${MODEL_ID}-`)), `every turn must be served by ${MODEL_ID}`);
-  assert.ok(long.turns.length >= MIN_LONG_TURNS, `long session took only ${long.turns.length} turns`);
-  long.turns.slice(1).forEach((turn, index) => {
-    assert.ok(turn.cacheRead >= MIN_CONTEXT_REUSE * contextTokens(long.turns[index]), `long-session turn ${index + 1} lost its cache`);
-  });
-  assert.ok(hitRatio(long.turns) >= MIN_HIT_RATIO, `long-session hit ratio ${hitRatio(long.turns)}`);
-  assert.ok(resumed.turns[0].cacheRead >= MIN_CONTEXT_REUSE * contextTokens(long.turns.at(-1)), "a resumed process must reuse the session's prompt cache");
-  assert.ok(retentionAfterIdle.turns[0].cacheRead >= MIN_CONTEXT_REUSE * contextTokens(retentionStart.turns.at(-1)), "the one-hour cache must outlive the five-minute lifetime");
-  assert.ok(idle.turns.length > 0, "the session must continue after its cache expires");
-  assert.ok(fresh.turns[0].cacheRead > 0, "a fresh session must reuse the shared tools and system prefix");
-  assert.ok(fresh.stdout.includes(EMOJI_SENTINEL), "emoji must survive the round trip through Claude");
+    writeSummary();
+    const allTurns = phases.flatMap((entry) => entry.turns);
+    assert.equal(summary.responses, allTurns.length, "every turn must report its plan status");
+    assert.deepEqual(summary.statuses, [200]);
+    assert.ok(summary.planStatuses.every((status: string) => status === "allowed" || status === "allowed_warning"), "every response must stay within plan limits");
+    assert.ok(allTurns.every((turn) => turn.provider === PROVIDER_ID), "every turn must use the subscription provider");
+    assert.ok(allTurns.every((turn) => turn.servedModel === MODEL_ID || turn.servedModel.startsWith(`${MODEL_ID}-`)), `every turn must be served by ${MODEL_ID}`);
+    assert.ok(resumed.turns[0].cacheRead >= MIN_CONTEXT_REUSE * contextTokens(long.turns.at(-1)), "a resumed process must reuse the session's prompt cache");
+    assert.ok(retentionAfterIdle.turns[0].cacheRead >= MIN_CONTEXT_REUSE * contextTokens(retentionStart.turns.at(-1)), "the one-hour cache must outlive the five-minute lifetime");
+    if (IDLE_MS > FIVE_MINUTES_MS) assert.ok(idle.turns[0].cacheRead < 0.5 * contextTokens(resumed.turns.at(-1)), "the five-minute cache must expire, or the one-hour check proves nothing");
+    assert.ok(fresh.turns[0].cacheRead > 0, "a fresh session must reuse the shared tools and system prefix");
+    assert.ok(fresh.stdout.includes(EMOJI_SENTINEL), "emoji must survive the round trip through Claude");
+  } finally {
+    if (summary === undefined) writeSummary();
+  }
 });

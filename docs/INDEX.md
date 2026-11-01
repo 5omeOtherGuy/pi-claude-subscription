@@ -9,4 +9,4 @@
 - [`prompt-cache-live-verification.md`](prompt-cache-live-verification.md) — opt-in runbook and recorded results for prompt-cache behavior on long sessions, without committing live logs.
 - [`token-efficiency-todos.md`](token-efficiency-todos.md) — candidate quota-reduction backlog with evaluation guardrails.
 
-Historical review notes, live verification outputs, local environment logs, and one-off progress files are intentionally kept outside this public repository.
+Historical review notes, raw live logs, local environment logs, and one-off progress files are intentionally kept outside this public repository.

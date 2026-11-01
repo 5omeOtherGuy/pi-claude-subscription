@@ -43,7 +43,7 @@ One run on 2026-11-01 on one Claude subscription account with extra usage off: `
 
 | Phase | Turns | Cache hit ratio | What it shows |
 |---|---:|---:|---|
-| Review of 61 files | 60 | 96.5% | Context grew to about 229,600 tokens. Every turn after the first read at least 90% of the previous context. |
+| Read-only repository review | 60 | 96.5% | Context grew to about 229,600 tokens. Every turn after the first read at least 90% of the previous context. |
 | New process, same session | 3 | 99.5% | Restarting Pi keeps the cache. |
 | After 5.5 idle minutes, 5-minute cache | 2 | 50.7% | The session's cache had expired. The first turn read 3,640 tokens and wrote 229,958. |
 | After 5.5 idle minutes, 1-hour cache | 1 | 99.4% | A small separate session read 4,299 tokens and wrote 20 after the same gap. |
@@ -57,7 +57,7 @@ All 69 responses were HTTP 200 with `anthropic-ratelimit-unified-status: allowed
 
 `PI_CACHE_RETENTION=long` works on the OAuth route, and the cache outlived the 5-minute lifetime in the phase above. The test does not show that it lasts a full hour.
 
-The 1-hour cache has a cost. Pi's pricing code charges 1-hour cache writes at 2x the input price, against 1.25x for the 5-minute cache. At Opus 5.5 API prices, where cache reads cost 0.05x, the long session above would have cost about 11% less overall on the 1-hour cache with its one idle gap, and about 27% more with no gap. How the subscription counts these writes is unknown.
+The 1-hour cache has a cost. Pi's pricing code charges 1-hour cache writes at 2x the input price, against 1.25x for the 5-minute cache. At Opus 5.5 API prices, where cache reads cost 0.05x, the long session above would have cost about 11% less in input-side cost on the 1-hour cache with its one idle gap, and about 27% more with no gap. The gap in this run came at peak context, which favors the 1-hour cache: it breaks even at about 146,000 tokens of context. How the subscription counts these writes is unknown.
 
 ### Comparison with other Pi routes
 
@@ -69,6 +69,6 @@ This comparison ran offline with fake tokens on 2026-11-01. Pi 1.4.0 ran each ro
 | Pi's built-in `anthropic` OAuth | 4 | Each turn reuses the previous turn | 0.7% |
 | `pi-anthropic-auth` 3.4.3 | 4 | Each turn reuses the previous turn | 65.8% |
 
-`pi-anthropic-auth` puts a per-conversation billing block before the system prompt, so a new session cannot reuse that prefix. At the same API prices, the scripted session cost about 7.8% more than this provider. The gap would be larger for many very short sessions and smaller for long ones.
+`pi-anthropic-auth` puts a per-conversation billing block before the system prompt, so a new session cannot reuse that prefix. At the same API prices, the scripted session cost about 7.8% more in input-side cost than this provider, nearly all of it from that rewrite. The gap would be larger for many very short sessions and smaller for long ones.
 
 Caching does not appear to explain the 3x to 4x usage gap reported in [its issue #83](https://github.com/gotgenes/pi-anthropic-auth/issues/83). The reporter changed only a request label, kept the same caching, and saw usage fall from 11% to 4%. That is one unconfirmed report.

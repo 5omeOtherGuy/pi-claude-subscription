@@ -120,6 +120,7 @@ Module-by-module responsibilities are in [`src/INDEX.md`](src/INDEX.md); the tes
     ├── live-long-session.test.ts
     ├── live-opus-5-5.test.ts
     ├── live-opus46-routing.test.ts
+    ├── model-catalog.test.ts
     ├── model-matrix.test.ts
     ├── native-cache-prefix.test.ts
     ├── native-convert-messages-memo.test.ts

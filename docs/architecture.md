@@ -79,6 +79,14 @@ Manual-budget models are `claude-haiku-4-5`, `claude-sonnet-4-6`, and `claude-op
 - The registration `apiKey` is an inert non-`$` literal placeholder; Pi's config layer interprets a leading `$` as environment-variable interpolation.
 - `/claude-subscription-accounts` stores only the selected source descriptor in `pi-claude-subscription/credential-state.json`; `/claude-subscription-import` copies the selected blob to `pi-claude-subscription/imported-credentials.json`. Neither mutates Pi's generic `auth.json`.
 
+## Model catalog
+
+`src/model-catalog.ts` backs Pi's `refreshModels` hook. Pi refreshes offline after any provider registration, and each result replaces the live model list. It refreshes over the network at interactive and RPC startup, and when `/model <pattern>` finds no cached match or the model and scoped-models selectors open. Print mode never refreshes over the network.
+
+On a network refresh, the provider reads up to 10 pages of `GET /v1/models`. If every page succeeds and at least one entry is usable, it saves the entries to `<agentDir>/pi-claude-subscription/model-catalog.json`, keeping only the fields that mapping reads. The file holds API metadata and never holds credentials. An offline or failed refresh rebuilds the list from that file, so API models survive restarts and offline refreshes. With no usable file, the list falls back to `MODELS`. The file has no age limit, so a removed model stays until the next successful network refresh.
+
+The API decides which models exist. Known models come from `MODELS` unchanged, including their limits. New models need adaptive thinking, an effort table, and `high` effort, and they get `compat.forceAdaptiveThinking`. A known model also stays when the API lists a dated name, such as `claude-haiku-4-5-20251001`, or the wire model of an alias, unless that entry is retired. The file records which built-in ids existed when it was written. After a package update, offline and failed refreshes add newer built-in models to the list, until the next successful refresh rewrites the file.
+
 ## Cache-retention behavior
 
 Native requests add short ephemeral prompt-cache anchors by default to the shaped system blocks, the last user message block, and the last tool schema. Policy follows Pi's `cacheRetention` option: `short`/unset uses short ephemeral cache control; `long` uses `ttl: "1h"` only when `compat.supportsLongCacheRetention` is not `false`; `none` omits anchors while preserving the system-block shape. Unset also honors `PI_CACHE_RETENTION=long`.

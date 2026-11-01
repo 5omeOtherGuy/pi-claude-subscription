@@ -10,7 +10,7 @@ No live Anthropic calls: the deterministic suite must stay free of live Anthropi
 | Request headers/body/cache | `node --test --import tsx tests/native-request.test.ts tests/native-cache-prefix.test.ts tests/native-stream-simple.test.ts` | `npm run check` |
 | Credentials/refresh/redaction | `node --test --import tsx tests/native-credentials.test.ts tests/redaction.test.ts tests/native-stream-simple.test.ts` | `npm run check` |
 | Extension registration/provider guard | `node --test --import tsx tests/current-provider-system-shape.test.ts tests/package-manifest.test.ts tests/pi-session.test.ts` | `npm run check` |
-| Dependency/model metadata | `node --test --import tsx tests/dependency-drift.test.ts tests/current-provider-system-shape.test.ts tests/native-request.test.ts tests/pi-session.test.ts` plus `npm run typecheck` | `npm run check` |
+| Dependency/model metadata | `node --test --import tsx tests/dependency-drift.test.ts tests/current-provider-system-shape.test.ts tests/model-catalog.test.ts tests/native-request.test.ts tests/pi-session.test.ts` plus `npm run typecheck` | `npm run check` |
 | Docs only | Link/path and wording checks for the touched docs | `npm run typecheck` optional if code is untouched |
 
 `npm run check` (CI job `gate`: secret scan, tests, typecheck) is the pre-PR gate for behavior, dependency, model, request, credential, stream, and package changes.

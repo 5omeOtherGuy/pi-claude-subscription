@@ -8,6 +8,7 @@
 - `credentials.ts` — credential path resolution, token loading, refresh/persistence, in-process refresh coalescing, token caching, stale-write avoidance, and macOS Keychain fallback.
 - `native-headers.ts` — OAuth-only Anthropic headers; intentionally no `x-api-key`.
 - `native-request.ts` — pure Messages request construction, system-shape application, and prompt-cache anchors with `cacheRetention` / `PI_CACHE_RETENTION` handling.
+- `model-catalog.ts` — Pi `refreshModels` hook: reads `GET /v1/models`, saves the last good list, and maps entries to model configs.
 - `native-message-conversion.ts` — pure Pi-message to Anthropic-block conversion, including surrogate sanitization/memoization, same-model signed-thinking replay, tool-use id mapping, and tool-result sequencing.
 - `native-payload.ts` — Pi context/model/options to Anthropic payload shaping, including tool schemas, thinking budgets, native model id mapping, and the server-side fallback latch.
 - `native-stream-transport.ts` — raw fetch/SSE transport: URL guard, response callbacks, response-start/no-progress watchdogs, and full-text/incremental helpers.

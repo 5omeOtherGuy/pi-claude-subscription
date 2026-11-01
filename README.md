@@ -115,7 +115,16 @@ To cycle the thinking level, press `Shift+Tab`. To set it at startup, pass `--th
 
 Pi's built-in `anthropic` models may also be listed. They are separate from these models, and this package refuses new prompts on them while it is loaded.
 
-Pi refreshes this provider's model list from Anthropic's `GET /v1/models` with the active Claude Code OAuth credential. If that request is offline, rejected, or malformed, the models in the [model reference](#model-reference) stay available. The provider adds a new model only when the API supplies usable context, output, and capability data. Known models keep their thinking-level map. The API list may not match the models enabled for your subscription, so a listed model can still fail when you call it. To pick up later catalog changes, refresh Pi's model list.
+The model list refreshes itself. Pi calls Anthropic's `GET /v1/models` with the active Claude Code OAuth credential when an interactive or RPC session starts, and when `/model` or the scoped-models selector needs the list. A refresh runs no model. The provider saves the result to `pi-claude-subscription/model-catalog.json` in Pi's agent directory. Offline runs, print mode, and later sessions then use the list from the last successful refresh. Print mode never refreshes by itself. If a refresh fails, the provider keeps the saved list. With no saved list, it uses the models in the [model reference](#model-reference).
+
+A refresh follows these rules:
+
+- The provider adds a new model only when the API supplies usable context, output, and capability data, and only if the model uses adaptive thinking.
+- Known models keep their built-in settings and limits. The API decides only whether they stay on the list.
+- A known model leaves the list if the API no longer lists it, under its own name or a dated name.
+- After a package update, offline and failed refreshes also show its new built-in models, until the next successful refresh.
+
+The API list may not match the models enabled for your subscription, so a listed model can still fail when you call it.
 
 ### Slash commands
 

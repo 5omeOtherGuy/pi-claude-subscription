@@ -11,7 +11,8 @@ Deterministic Node tests use fake credentials, fake tokens, and mocked network/t
 - `live-opus-5-5.test.ts` — opt-in live check: a request without a Pi level is accepted with explicit `low` effort and no fallback, the response confirms the model, and a `high`-effort tool-use turn's signed thinking replays verbatim.
 - `live-opus46-routing.test.ts` — opt-in live check that selecting `claude-opus-4-6` sends Opus 4.6 and the response model confirms it.
 - `model-matrix.test.ts` — keeps the documented compatibility matrix in sync with `MODELS` and asserts the threat-model headings/secret-shape absence in `SECURITY.md`.
-- `native-cache-prefix.test.ts` — each turn sends the previous request as an exact prefix, every request uses all four cache breakpoints, and new sessions share the tools and system prefix.
+- `live-long-session.test.ts` — opt-in: drives the real `pi` CLI through a many-turn review, a restart, an idle gap and a fresh session; asserts plan status, cache reuse, the 1-hour cache and emoji.
+- `native-cache-prefix.test.ts` — on both context shapes, each turn sends the previous request as an exact prefix after a simulated restart, all four cache breakpoints stay in use, and new sessions share the tools and system prefix.
 - `native-convert-messages-memo.test.ts` — memoized message conversion is byte-identical across a multi-turn fixture, reuses cached entries, reuses prior turns on append, and does not reuse model-dependent assistant conversions.
 - `native-surrogates.test.ts` — valid emoji reach Anthropic intact in user, assistant, tool-result and foreign-thinking text; unpaired surrogates become replacement characters.
 - `native-credentials.test.ts` — credential loading, expired/forced refresh/persistence, refresh coalescing, token caching, stale-write avoidance, Keychain fallback, `ANTHROPIC_*` non-fallback, OAuth-only headers.

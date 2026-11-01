@@ -13,7 +13,7 @@ Evaluation requirements: expected token/quota savings, implementation/maintenanc
 
 ## Status
 
-Items 1–6 are implemented and covered by deterministic tests: live prompt-cache behavior confirmed in aggregate (undated per-turn runbook available at [`prompt-cache-live-verification.md`](prompt-cache-live-verification.md)); deterministic payload prefixes and byte-stable golden request-body snapshots for every registered model; cache-anchor/usage-accounting regression tests. Item 8 is partially implemented: Pi `cacheRetention` (`short`/`long`/`none`) and `PI_CACHE_RETENTION=long` are honored, with long TTL gated by model compatibility; session-stable latching remains open.
+Items 1–6 are implemented and covered by deterministic tests: live prompt-cache behavior confirmed in aggregate (per-turn runbook and dated results at [`prompt-cache-live-verification.md`](prompt-cache-live-verification.md)); deterministic payload prefixes and byte-stable golden request-body snapshots for every registered model; cache-anchor/usage-accounting regression tests. Item 8 is partially implemented: Pi `cacheRetention` (`short`/`long`/`none`) and `PI_CACHE_RETENTION=long` are honored, with long TTL gated by model compatibility; session-stable latching remains open.
 
 ## Open items
 

@@ -18,13 +18,14 @@ No live Anthropic calls: the deterministic suite must stay free of live Anthropi
 ## Host compatibility
 
 - Supported Pi range: `>=0.80.6 <2` (the `peerDependencies` in `package.json`). 0.80.6 is the floor for native `max` thinking; Pi 2.x is untested and outside the range until verified.
-- CI tests the locked devDependency, which is the newest Pi release (1.3.0 as of 2026-10-18), with `tests/pi-session.test.ts`: it loads the extension into a real Pi session against a stubbed Anthropic endpoint and checks provider selection, OAuth-only headers, system blocks, tool declarations, and a tool-call round trip. On 2026-10-18 the same scenario also passed against Pi 0.80.6 and 0.87.1 in scratch installs (`npm install --no-save @earendil-works/pi-ai@<v> @earendil-works/pi-coding-agent@<v>`); older Pi such as 0.80.6 exposes `session.modelRegistry.find()` instead of `session.modelRuntime.getModel()`.
+- CI tests the locked devDependency, which is the newest Pi release (1.4.0 as of 2026-11-01), with `tests/pi-session.test.ts`: it loads the extension into a real Pi session against a stubbed Anthropic endpoint and checks provider selection, OAuth-only headers, system blocks, tool declarations, and a tool-call round trip. On 2026-10-18 the same scenario also passed against Pi 0.80.6 and 0.87.1 in scratch installs (`npm install --no-save @earendil-works/pi-ai@<v> @earendil-works/pi-coding-agent@<v>`); older Pi such as 0.80.6 exposes `session.modelRegistry.find()` instead of `session.modelRuntime.getModel()`.
 - When a new Pi major ships, bump both Pi packages together (Dependabot's `pi` group does this), adapt `src/` and `tests/`, repeat the check above, and widen the range only for what was verified.
 
 ## Supply-chain drift policy
 
 - Bump `@earendil-works/pi-ai` and `@earendil-works/pi-coding-agent` together. They share private TypeScript members and provider contracts; drifting one without the other can compile against the wrong API surface.
 - After changing either package, rerun the dependency/model metadata gate and re-check native request/tool-call assumptions: Pi-core `edit` schema, validation, `prepareArguments`, built-in Anthropic tool conversion, OAuth headers, and provider registration.
+- `overrides` in `package.json` forces `undici` to 8.12.2 in the development tree, because Pi 1.4.0 pins the vulnerable 8.10.2 (Dependabot alert 33). Remove the override once a Pi release ships a patched `undici`. The override does not change what users install: this package has no runtime dependencies, and Pi brings its own `undici`.
 - Keep `@types/node` on the declared Node floor (`~22.19.0`) so TypeScript cannot allow APIs outside `engines.node`.
 - Treat lockfile updates as behavior changes unless clearly type-only/dev-only, and record why the upgrade is safe.
 - `tests/dependency-drift.test.ts` enforces an installed-vs-lockfile preflight: for every declared dependency it compares the `package-lock.json` version against the version present in `node_modules`, so a stale install fails before `npm test` dies at import with `ERR_MODULE_NOT_FOUND`. When it fails, run `npm ci`.

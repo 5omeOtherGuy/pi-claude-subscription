@@ -81,7 +81,7 @@ test("a real Pi session routes a tool-call round trip through claude-subscriptio
     settingsManager,
     noContextFiles: true,
     noSkills: true,
-    additionalExtensionPaths: [fileURLToPath(new URL("../extensions/minimalcc-pi/index.ts", import.meta.url))],
+    additionalExtensionPaths: [fileURLToPath(new URL("../extensions/pi-claude-subscription/index.ts", import.meta.url))],
   });
   await resourceLoader.reload();
   assert.deepEqual(resourceLoader.getExtensions().errors, []);

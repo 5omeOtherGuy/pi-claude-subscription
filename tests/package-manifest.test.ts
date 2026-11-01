@@ -45,7 +45,7 @@ test("packageManifestExposesPiExtensionWithoutCredentialMaterial", () => {
   });
   assert.deepEqual(pkg.files, ["extensions/", "src/", "docs/", "CHANGELOG.md", "README.md", "LICENSE"]);
 
-  assert.deepEqual(pkg.pi?.extensions, ["./extensions/minimalcc-pi"]);
+  assert.deepEqual(pkg.pi?.extensions, ["./extensions/pi-claude-subscription"]);
   const extensionPath = new URL(`../${pkg.pi?.extensions?.[0] ?? ""}/index.ts`, import.meta.url);
   assert.ok(existsSync(extensionPath), `extension entry must exist: ${pkg.pi?.extensions?.[0]}/index.ts`);
 
@@ -76,7 +76,7 @@ test("packageDryRunContainsOnlyPublicRuntimeAndDocumentationFiles", () => {
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
-    "extensions/minimalcc-pi/index.ts",
+    "extensions/pi-claude-subscription/index.ts",
     "src/models.ts",
     "src/native-stream-simple.ts",
     "docs/architecture.md",

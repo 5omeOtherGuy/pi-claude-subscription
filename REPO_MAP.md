@@ -47,7 +47,7 @@ https://api.anthropic.com/v1/messages -> Anthropic Claude models via the subscri
 - Pi swallows `before_provider_request` hook errors; that hook must not be documented as the sole safety boundary.
 - The first Anthropic `system` block must be exactly `You are Claude Code, Anthropic's official CLI for Claude.`, as a separate first text block (not concatenated with the Pi prompt).
 - Runtime must not depend on a local proxy, Python virtual environment, or background service.
-- Public docs must not include live verification runbooks, one-off verification logs, or machine-specific setup notes.
+- Public docs may carry dated, aggregate live results and opt-in runbooks. They must not include raw logs, request or response bodies, or machine-specific setup notes.
 
 ## Component map
 
@@ -117,9 +117,11 @@ Module-by-module responsibilities are in [`src/INDEX.md`](src/INDEX.md); the tes
     ├── dependency-drift.test.ts
     ├── edit-tool-arguments.test.ts
     ├── extension-changelog.test.ts
+    ├── live-long-session.test.ts
     ├── live-opus-5-5.test.ts
     ├── live-opus46-routing.test.ts
     ├── model-matrix.test.ts
+    ├── native-cache-prefix.test.ts
     ├── native-convert-messages-memo.test.ts
     ├── native-surrogates.test.ts
     ├── native-credentials.test.ts

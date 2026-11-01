@@ -61,7 +61,7 @@ The 1-hour cache has a cost. Pi's pricing code charges 1-hour cache writes at 2x
 
 ### Comparison with other Pi routes
 
-This comparison ran offline with fake tokens on 2026-11-01. Pi 1.4.0 ran each route in a no-network sandbox through the same scripted session against a local server. Prefix reuse was then calculated from the captured requests using Anthropic's documented rule, in characters of JSON. These are simulated figures, not Anthropic's reported usage.
+This comparison ran offline with fake tokens on 2026-11-01. Pi 1.4.0 ran each route in a no-network sandbox through the same two scripted sessions, of 9 and 4 requests, against a local server. Prefix reuse was then calculated from the captured requests using Anthropic's documented rule, in characters of JSON. These are simulated figures, not Anthropic's reported usage.
 
 | Route | Cache breakpoints | Reuse within a session | First request of a new session rewrites |
 |---|---|---|---|
@@ -69,6 +69,8 @@ This comparison ran offline with fake tokens on 2026-11-01. Pi 1.4.0 ran each ro
 | Pi's built-in `anthropic` OAuth | 4 | Each turn reuses the previous turn | 0.7% |
 | `pi-anthropic-auth` 3.4.3 | 4 | Each turn reuses the previous turn | 65.8% |
 
-`pi-anthropic-auth` puts a per-conversation billing block before the system prompt, so a new session cannot reuse that prefix. At the same API prices, the scripted session cost about 7.8% more in input-side cost than this provider, nearly all of it from that rewrite. The gap would be larger for many very short sessions and smaller for long ones.
+Pi's `cacheWarming` setting favors the other two routes. It defaults to `streaming` and refreshes the cache during long tool runs on models that declare a cache lifetime. Pi's built-in Claude models do, and this provider's do not, so a tool run longer than 5 minutes loses the cache here unless you use the 1-hour cache. This comes from reading Pi 1.4.0's code, and we did not observe it running.
+
+`pi-anthropic-auth` puts a per-conversation billing block before the system prompt, so a new session with a different first message cannot reuse that prefix. At the same API prices, the two sessions together cost about 7.8% more in input-side cost than this provider, nearly all of it from that rewrite in the second session. The gap would be larger for many very short sessions and smaller for long ones.
 
 Caching does not appear to explain the 3x to 4x usage gap reported in [its issue #83](https://github.com/gotgenes/pi-anthropic-auth/issues/83). The reporter changed only a request label, kept the same caching, and saw usage fall from 11% to 4%. That is one unconfirmed report.

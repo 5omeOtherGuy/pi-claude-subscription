@@ -131,6 +131,7 @@ test("live long session stays on the plan, keeps its cache warm and round-trips 
     ...process.env,
     PI_CODING_AGENT_DIR: join(scratch, "agent"),
     PI_OFFLINE: "1",
+    PI_CACHE_RETENTION: "",
     PI_LIVE_RESPONSE_LOG: responseLog,
   };
   const baseArgs = [
@@ -219,6 +220,13 @@ test("live long session stays on the plan, keeps its cache warm and round-trips 
     assert.ok(fresh.turns[0].cacheRead > 0, "a fresh session must reuse the shared tools and system prefix");
     assert.ok(fresh.stdout.includes(EMOJI_SENTINEL), "emoji must survive the round trip through Claude");
   } finally {
-    if (summary === undefined) writeSummary();
+    // A failure here must not replace the error that ended the run.
+    if (summary === undefined) {
+      try {
+        writeSummary();
+      } catch (error) {
+        t.diagnostic(`could not write results: ${String(error)}`);
+      }
+    }
   }
 });

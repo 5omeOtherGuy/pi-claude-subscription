@@ -79,6 +79,12 @@ Manual-budget models are `claude-haiku-4-5`, `claude-sonnet-4-6`, and `claude-op
 - The registration `apiKey` is an inert non-`$` literal placeholder; Pi's config layer interprets a leading `$` as environment-variable interpolation.
 - `/claude-subscription-accounts` stores only the selected source descriptor in `pi-claude-subscription/credential-state.json`; `/claude-subscription-import` copies the selected blob to `pi-claude-subscription/imported-credentials.json`. Neither mutates Pi's generic `auth.json`.
 
+## Model catalog
+
+`src/model-catalog.ts` backs Pi's `refreshModels` hook. Pi refreshes offline after any provider registration and over the network at interactive and RPC startup and when `/model` opens, and each result replaces the live model list. On a network refresh, the provider reads every page of `GET /v1/models` and saves the raw entries to `<agentDir>/pi-claude-subscription/model-catalog.json`. The file holds API metadata only, never credentials. An offline or failed refresh rebuilds the list from that file, so API models survive restarts and offline refreshes. With no usable file, the list falls back to `MODELS`. Saving raw entries means that a later package version applies its own rules to them.
+
+Known models keep their `compat` settings and thinking-level map and take only limits, name, and image capability from the API. New models need adaptive thinking, an effort table, and `high` effort. A known model stays when the API lists it, or a dated name such as `claude-haiku-4-5-20251001`, or the wire model of an alias.
+
 ## Cache-retention behavior
 
 Native requests add short ephemeral prompt-cache anchors by default to the shaped system blocks, the last user message block, and the last tool schema. Policy follows Pi's `cacheRetention` option: `short`/unset uses short ephemeral cache control; `long` uses `ttl: "1h"` only when `compat.supportsLongCacheRetention` is not `false`; `none` omits anchors while preserving the system-block shape. Unset also honors `PI_CACHE_RETENTION=long`.

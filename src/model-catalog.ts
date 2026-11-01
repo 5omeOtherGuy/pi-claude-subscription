@@ -1,4 +1,8 @@
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+
 import type { RefreshModelsContext } from "@earendil-works/pi-ai";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 
 import { loadActiveClaudeCodeCredentials } from "./credential-accounts.ts";
 import { buildNativeHeaders } from "./native-headers.ts";
@@ -59,7 +63,8 @@ function mapModel(raw: unknown): ClaudeModelConfig | undefined {
     name: `${raw.display_name} (Claude Code subscription)`,
     reasoning,
     ...(thinkingLevelMap ? { thinkingLevelMap } : {}),
-    ...(known && "compat" in known ? { compat: known.compat } : adaptive ? { compat: { forceAdaptiveThinking: true } } : {}),
+    // Known models keep their tested request settings, whatever else the API offers.
+    ...(known ? (known.compat ? { compat: known.compat } : {}) : { compat: { forceAdaptiveThinking: true } }),
     input: capabilities && capabilities.image_input !== undefined
       ? (supported(capabilities.image_input) ? ["text", "image"] : ["text"])
       : known ? [...known.input] : ["text"],
@@ -69,46 +74,92 @@ function mapModel(raw: unknown): ClaudeModelConfig | undefined {
   };
 }
 
+function buildCatalog(entries: readonly unknown[]): ClaudeModelConfig[] {
+  const models: ClaudeModelConfig[] = [];
+  const ids = new Set<string>();
+  for (const entry of entries) {
+    const mapped = mapModel(entry);
+    if (mapped && !ids.has(mapped.id)) { models.push(mapped); ids.add(mapped.id); }
+  }
+  if (models.length === 0) return [...MODELS];
+  // Keep local names for models the API lists under another id: selection aliases
+  // and undated names such as claude-haiku-4-5 for claude-haiku-4-5-20251001.
+  const advertisedIds = entries.flatMap((entry) => (isRecord(entry) && typeof entry.id === "string" ? [entry.id] : []));
+  for (const local of MODELS) {
+    if (ids.has(local.id)) continue;
+    const nativeId = (local.compat as AnthropicCompat | undefined)?.nativeModelId;
+    const isDatedName = (id: string) => id.startsWith(`${local.id}-`) && /^\d{8}$/.test(id.slice(local.id.length + 1));
+    if ((nativeId && ids.has(nativeId)) || advertisedIds.some(isDatedName)) models.push(local);
+  }
+  return models;
+}
+
+async function fetchCatalogEntries(fetchImpl: FetchLike, loadToken: LoadToken, parent: AbortSignal): Promise<unknown[] | undefined> {
+  try {
+    const token = await loadToken();
+    const signal = AbortSignal.any([parent, AbortSignal.timeout(TIMEOUT_MS)]);
+    const entries: unknown[] = [];
+    let cursor: string | undefined;
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const url = new URL(CLAUDE_MODELS_URL);
+      url.searchParams.set("limit", "100");
+      if (cursor) url.searchParams.set("after_id", cursor);
+      const response = await fetchImpl(url.href, { headers: buildNativeHeaders(token), signal });
+      if (!response.ok) return undefined;
+      const payload: unknown = await response.json();
+      if (!isRecord(payload) || !Array.isArray(payload.data) || typeof payload.has_more !== "boolean") return undefined;
+      entries.push(...payload.data);
+      if (!payload.has_more) return entries;
+      if (typeof payload.last_id !== "string" || !payload.last_id || payload.last_id === cursor) return undefined;
+      cursor = payload.last_id;
+    }
+  } catch {
+    // Missing Claude Code login, OAuth denial, timeout, malformed JSON, or network failure.
+  }
+  return undefined;
+}
+
+async function readSavedEntries(path: string): Promise<unknown[] | undefined> {
+  try {
+    const saved: unknown = JSON.parse(await readFile(path, "utf8"));
+    return isRecord(saved) && Array.isArray(saved.data) ? saved.data : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function saveEntries(path: string, entries: readonly unknown[]): Promise<void> {
+  try {
+    await mkdir(dirname(path), { recursive: true });
+    const temporaryPath = `${path}.${process.pid}.tmp`;
+    await writeFile(temporaryPath, `${JSON.stringify({ fetchedAt: new Date().toISOString(), data: entries }, null, 2)}\n`, { mode: 0o600 });
+    await rename(temporaryPath, path);
+  } catch {
+    // The saved list only speeds up later runs, so a failed write must not fail the refresh.
+  }
+}
+
+export function getDefaultModelCatalogPath(): string {
+  return join(getAgentDir(), "pi-claude-subscription", "model-catalog.json");
+}
+
+// Pi also refreshes offline, and each result replaces the live list. Returning the
+// last good list here keeps API models across those refreshes and across restarts.
 export function createClaudeModelCatalog(
   fetchImpl: FetchLike = globalThis.fetch.bind(globalThis),
   loadToken: LoadToken = loadActiveClaudeCodeCredentials,
+  catalogPath?: string,
 ) {
+  const lastGoodList = async (): Promise<ClaudeModelConfig[]> => {
+    const saved = await readSavedEntries(catalogPath ?? getDefaultModelCatalogPath());
+    return saved ? buildCatalog(saved) : [...MODELS];
+  };
   return async (context: RefreshModelsContext): Promise<ClaudeModelConfig[]> => {
-    if (!context.allowNetwork || context.signal.aborted) return [...MODELS];
-    try {
-      const token = await loadToken();
-      const signal = AbortSignal.any([context.signal, AbortSignal.timeout(TIMEOUT_MS)]);
-      const models: ClaudeModelConfig[] = [];
-      const ids = new Set<string>();
-      let cursor: string | undefined;
-      for (let page = 0; page < MAX_PAGES; page++) {
-        const url = new URL(CLAUDE_MODELS_URL);
-        url.searchParams.set("limit", "100");
-        if (cursor) url.searchParams.set("after_id", cursor);
-        const response = await fetchImpl(url.href, { headers: buildNativeHeaders(token), signal });
-        if (!response.ok) return [...MODELS];
-        const payload: unknown = await response.json();
-        if (!isRecord(payload) || !Array.isArray(payload.data) || typeof payload.has_more !== "boolean") return [...MODELS];
-        for (const entry of payload.data) {
-          const mapped = mapModel(entry);
-          if (mapped && !ids.has(mapped.id)) { models.push(mapped); ids.add(mapped.id); }
-        }
-        if (!payload.has_more) {
-          // Preserve local selection aliases when their wire model is advertised.
-          for (const local of MODELS) {
-            if (ids.has(local.id)) continue;
-            const nativeId = (local.compat as AnthropicCompat | undefined)?.nativeModelId;
-            if (nativeId && ids.has(nativeId)) models.push(local);
-          }
-          return models.length ? models : [...MODELS];
-        }
-        if (typeof payload.last_id !== "string" || !payload.last_id || payload.last_id === cursor) return [...MODELS];
-        cursor = payload.last_id;
-      }
-    } catch {
-      // Missing Claude Code login, OAuth denial, timeout, malformed JSON, or network failure.
-    }
-    return [...MODELS];
+    if (!context.allowNetwork || context.signal.aborted) return lastGoodList();
+    const entries = await fetchCatalogEntries(fetchImpl, loadToken, context.signal);
+    if (!entries?.some((entry) => mapModel(entry) !== undefined)) return lastGoodList();
+    await saveEntries(catalogPath ?? getDefaultModelCatalogPath(), entries);
+    return buildCatalog(entries);
   };
 }
 

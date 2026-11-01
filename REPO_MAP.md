@@ -117,9 +117,11 @@ Module-by-module responsibilities are in [`src/INDEX.md`](src/INDEX.md); the tes
     ├── dependency-drift.test.ts
     ├── edit-tool-arguments.test.ts
     ├── extension-changelog.test.ts
+    ├── live-long-session.test.ts
     ├── live-opus-5-5.test.ts
     ├── live-opus46-routing.test.ts
     ├── model-matrix.test.ts
+    ├── native-cache-prefix.test.ts
     ├── native-convert-messages-memo.test.ts
     ├── native-surrogates.test.ts
     ├── native-credentials.test.ts

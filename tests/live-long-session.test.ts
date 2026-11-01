@@ -47,7 +47,7 @@ function repositoryFiles(): string[] {
     .filter((name) => name.endsWith(extension))
     .sort()
     .map((name) => `${directory}/${name}`);
-  return [...list("src", ".ts"), ...list("extensions/minimalcc-pi", ".ts"), ...list("docs", ".md"), ...list("tests", ".ts")];
+  return [...list("src", ".ts"), ...list("extensions/pi-claude-subscription", ".ts"), ...list("docs", ".md"), ...list("tests", ".ts")];
 }
 
 function longTask(files: string[]): string {

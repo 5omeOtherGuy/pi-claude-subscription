@@ -14,6 +14,8 @@ const environment = {
   GIT_AUTHOR_EMAIL: "test@example.invalid",
   GIT_COMMITTER_NAME: "test",
   GIT_COMMITTER_EMAIL: "test@example.invalid",
+  GIT_CONFIG_GLOBAL: "/dev/null",
+  GIT_CONFIG_NOSYSTEM: "1",
 };
 
 function git(cwd: string, ...args: string[]) {
@@ -75,7 +77,7 @@ test("the hook refuses a push to main from a linked worktree", () => {
   }
 });
 
-test("a checked-out branch cannot add or change hooks", () => {
+test("hooks added on a branch do not run on checkout or push", () => {
   const root = mkdtempSync(join(tmpdir(), "pre-push-hook-"));
   try {
     const { repo, worktree } = linkedWorktree(root);
@@ -91,6 +93,61 @@ test("a checked-out branch cannot add or change hooks", () => {
     git(worktree, "push", "-q", "origin", "feature");
     assert.equal(existsSync(marker), false, "a hook from the branch must never run");
     assert.equal(git(repo, "config", "--get", "core.hooksPath").stdout.trim(), "");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("installing from a linked worktree reaches the shared hooks directory", () => {
+  const root = mkdtempSync(join(tmpdir(), "pre-push-hook-"));
+  try {
+    const { repo, worktree } = linkedWorktree(root);
+    rmSync(join(repo, ".git", "hooks", "pre-push"));
+    installHooks(worktree);
+    assert.equal(readFileSync(join(repo, ".git", "hooks", "pre-push"), "utf8"), readFileSync(hook, "utf8"));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("installing refuses when a global core.hooksPath would hide the hook", () => {
+  const root = mkdtempSync(join(tmpdir(), "pre-push-hook-"));
+  try {
+    const { repo } = linkedWorktree(root);
+    const globalConfig = join(root, "gitconfig");
+    writeFileSync(globalConfig, "[core]\n\thooksPath = /tmp/elsewhere\n");
+    const install = spawnSync("sh", [installer], { cwd: repo, encoding: "utf8", env: { ...environment, GIT_CONFIG_GLOBAL: globalConfig } });
+    assert.notEqual(install.status, 0);
+    assert.match(install.stderr, /global core\.hooksPath/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a failed install keeps an existing core.hooksPath setting", () => {
+  const root = mkdtempSync(join(tmpdir(), "pre-push-hook-"));
+  try {
+    const { repo } = linkedWorktree(root);
+    git(repo, "config", "core.hooksPath", ".githooks");
+    git(repo, "update-ref", "-d", "refs/remotes/origin/main");
+    const install = spawnSync("sh", [installer], { cwd: repo, encoding: "utf8", env: environment });
+    assert.notEqual(install.status, 0);
+    assert.equal(git(repo, "config", "--get", "core.hooksPath").stdout.trim(), ".githooks");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("installing ignores a local branch named origin/main", () => {
+  const root = mkdtempSync(join(tmpdir(), "pre-push-hook-"));
+  try {
+    const { repo } = linkedWorktree(root);
+    writeFileSync(join(repo, ".githooks", "pre-push"), "#!/bin/sh\n# planted\n");
+    git(repo, "switch", "-q", "-c", "origin/main");
+    git(repo, "add", ".githooks/pre-push");
+    git(repo, "commit", "-q", "-m", "planted hook");
+    installHooks(repo);
+    assert.equal(readFileSync(join(repo, ".git", "hooks", "pre-push"), "utf8"), readFileSync(hook, "utf8"));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

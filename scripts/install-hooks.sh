@@ -6,13 +6,18 @@
 # worktrees share the installed hook.
 set -eu
 
-if git config --local --get core.hooksPath >/dev/null; then
-  git config --local --unset core.hooksPath
+if git config --global --get core.hooksPath >/dev/null; then
+  echo "hooks: a global core.hooksPath is set, so Git would ignore the installed hook" >&2
+  exit 1
 fi
 
 hooks_dir="$(git rev-parse --git-common-dir)/hooks"
 mkdir -p "$hooks_dir"
-git show origin/main:.githooks/pre-push > "$hooks_dir/pre-push.tmp"
+git show refs/remotes/origin/main:.githooks/pre-push > "$hooks_dir/pre-push.tmp"
 chmod 755 "$hooks_dir/pre-push.tmp"
 mv "$hooks_dir/pre-push.tmp" "$hooks_dir/pre-push"
+
+if git config --local --get core.hooksPath >/dev/null; then
+  git config --local --unset core.hooksPath
+fi
 echo "hooks: installed pre-push from origin/main"

@@ -3,7 +3,7 @@
 ## Profile
 
 - Purpose: Pi package whose extension registers a native `claude-subscription` provider, authenticated with Claude Code OAuth.
-- Stage: released (repository standard 2026-10-18)
+- Stage: released (repository standard)
 - Gate: `npm run check` (CI job `gate`)
 - Landing: PR, squash-merged on a green gate. Agents land: yes
 - Release: release-please PR. Agents release: no
@@ -38,7 +38,7 @@ Keep changes focused and deterministic. Never use or commit real credentials, OA
 
 ## Commands
 
-- Install: `npm ci`
+- Install: `npm ci`. Run Node through mise (`mise exec -- node`, `npm`, `npx`) so `.nvmrc` applies.
 - Test: `npm test`
 - Focused test: `node --test --import tsx tests/<name>.test.ts`
 - Typecheck: `npm run typecheck`
@@ -46,13 +46,9 @@ Keep changes focused and deterministic. Never use or commit real credentials, OA
 
 ## Workflow
 
-1. Per-task worktree (parallel-agent safe):
-   - The primary checkout is control-only. Never edit files or switch branches there.
-   - Preflight: `git status --short --branch && git worktree list && git fetch origin --prune`.
-   - Create: `git worktree add ../pi-claude-subscription-<slug> -b <type>/<slug> origin/main`. Keep one concern per branch and PR.
-   - A change to any of the following gets an independent review (another agent or the owner) before merge, listed or not: a sensitive path (profile above), a public interface, security-sensitive code, auth or credential handling, install or setup, deployment, CI or release configuration, or agent policy (`AGENTS.md`, `.agents/`, `.githooks/`). A docs change that alters rules or executable instructions counts too. The review is recorded on the PR against the reviewed head. A later push needs a new review.
-   - Merge once the gate is green on the head commit: `gh pr merge <N> --squash --match-head-commit <sha>`. The repo auto-deletes merged head branches. Never use `--admin`. Only the owner bypasses checks. When merging as `5omeOtherGuy`, add `--author-email 268151429+5omeOtherGuy@users.noreply.github.com` and author commits with that address, because this repository is public.
-   - Cleanup, from outside the worktree: `git worktree remove ../pi-claude-subscription-<slug> && git branch -D <branch> && git fetch origin --prune && git worktree prune`.
+1. Work in a per-task worktree, `git worktree add ~/Work/.worktrees/pi-claude-subscription/<slug> -b <type>/<slug> origin/main` after `git fetch origin --prune`; the primary checkout is control-only (no edits, no branch switches). One concern per branch and PR. Remove the worktree and branch after the merge.
+   - A change to a sensitive path (profile above), a public interface, security-sensitive code, auth or credential handling, install or setup, deployment, CI or release configuration, agent policy, or a docs change that alters rules or executable instructions gets an independent review (another agent or the owner) before merge, recorded on the PR against the reviewed head; a later push needs a new review.
+   - Squash-merge; never `--admin`. This repository is public: author commits with `268151429+5omeOtherGuy@users.noreply.github.com` and merge with `--author-email` set to it.
 2. For behavior changes, add or update deterministic tests first. Make no live Anthropic or API calls.
 3. Run `npm run check` before PRs.
 4. Write the PR title in user-facing Conventional Commits form. release-please builds `CHANGELOG.md` from the title.

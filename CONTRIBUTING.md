@@ -54,7 +54,7 @@ You need npm and Node.js 22.19 or newer. `.nvmrc` pins the CI default, and that 
 
 ## Submit a change
 
-1. Create a topic branch off `main`. Agents use the per-task worktree flow in [`AGENTS.md`](AGENTS.md) instead.
+1. Create a topic branch off `main`.
 
    ```bash
    git switch -c <topic> main
